@@ -4,19 +4,15 @@ from image_processing import *
 import numpy as np
 import cv2.aruco as aruco
 
-from utils import list_ports
+from utils import list_ports, get_center_point, load_templates, perspective_transform, template_matching
 
 COLS = 5
 ROWS = 6
 INNER_COLS = 7
 INNER_ROWS = 8
+FOLDER_PATH = 'app/numerals/'
 
-def get_center_point(corners):
-    # Calculate the average of x-coordinates and y-coordinates
-    avg_x = np.mean(corners[:, :, 0])
-    avg_y = np.mean(corners[:, :, 1])
-
-    return int(avg_x), int(avg_y)
+TEST_FILE = 'app/test5.jpg'
 
 class ArcheReader:
   
@@ -35,18 +31,25 @@ class ArcheReader:
   
   crop_size = 200
   
-  def __init__(self, test):
-    self.test = test
+  def __init__(self, args):
     print("init")
+    # check if test mode
+    self.test = args.test 
+    self.debug = args.debug
+    
+    # load templates
+    self.templates = load_templates(FOLDER_PATH)
+    
+    self.save_frames = args.save_frames
     self.adaptiveThreshWinSizeMin = 3
     self.adaptiveThreshWinSizeMax = 23
     self.adaptiveThreshWinSizeStep = 10
     self.adaptiveThreshConstant = 8
-    self.minMarkerPerimeterRate = 160 # / 1000
+    self.minMarkerPerimeterRate = 80 # / 1000
     self.maxMarkerPerimeterRate = 40 # / 10
     self.polygonalApproxAccuracyRate = 50 # / 1000
     cv2.namedWindow('arche-reading')
-    self.createTrackbars()
+    # self.createTrackbars()
     self.init()
     
   def createTrackbars(self):
@@ -81,7 +84,9 @@ class ArcheReader:
   def get_image(self):
     # if test enabled, use static image
     if self.test:
-      return "test.jpg"
+      path = TEST_FILE
+      frame = cv2.imread(path)
+      return frame
     # get current frame from webcam
     if self.capture == None:
       self.start_cam()
@@ -112,7 +117,6 @@ class ArcheReader:
     # Convert the image to grayscale (if necessary)
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-    
     # Load the ArUco dictionary (you may need to adjust the dictionary type)
     aruco_dict = aruco.getPredefinedDictionary(aruco.DICT_4X4_1000)
     
@@ -126,14 +130,15 @@ class ArcheReader:
     parameters.maxMarkerPerimeterRate = self.maxMarkerPerimeterRate / 10
     parameters.polygonalApproxAccuracyRate = self.polygonalApproxAccuracyRate / 1000
     
-    print("values")
-    print("adaptiveThreshWinSizeMin", self.adaptiveThreshWinSizeMin)
-    print("adaptiveThreshWinSizeMax", self.adaptiveThreshWinSizeMax)
-    print("adaptiveThreshWinSizeStep", self.adaptiveThreshWinSizeStep)
-    print("adaptiveThreshConstant", self.adaptiveThreshConstant)
-    print("minMarkerPerimeterRate", self.minMarkerPerimeterRate / 1000)
-    print("maxMarkerPerimeterRate", self.maxMarkerPerimeterRate / 10)
-    print("polygonalApproxAccuracyRate", self.polygonalApproxAccuracyRate / 1000)
+    if self.debug == True:
+      print("values")
+      print("adaptiveThreshWinSizeMin", self.adaptiveThreshWinSizeMin)
+      print("adaptiveThreshWinSizeMax", self.adaptiveThreshWinSizeMax)
+      print("adaptiveThreshWinSizeStep", self.adaptiveThreshWinSizeStep)
+      print("adaptiveThreshConstant", self.adaptiveThreshConstant)
+      print("minMarkerPerimeterRate", self.minMarkerPerimeterRate / 1000)
+      print("maxMarkerPerimeterRate", self.maxMarkerPerimeterRate / 10)
+      print("polygonalApproxAccuracyRate", self.polygonalApproxAccuracyRate / 1000)
     
   
     detector = aruco.ArucoDetector(aruco_dict, parameters)
@@ -156,7 +161,7 @@ class ArcheReader:
       # draw corners
       center_points = []
       for index, (id, center_point) in enumerate(self.lastDetectMarkers):
-        print("center_point", center_point)
+        # print("center_point", center_point)
         image = cv2.circle(image, center_point, 5, (0, 0, 255), -1)
         center_points.append(center_point)        
         
@@ -185,50 +190,87 @@ class ArcheReader:
       # Crop the image using the bounding box
       roi_cropped = roi_image[y:y+h, x:x+w]
       
-      # rotate 90 degrees
-      roi_cropped = cv2.rotate(roi_cropped, cv2.ROTATE_90_COUNTERCLOCKWISE)
-      padding = 20
-      _w = h
-      _h = w
-      # Calculate the dimensions of each segment
-      segment_width = (_w - padding * 2) // INNER_COLS
-      segment_height = (_h - padding * 2)  // INNER_ROWS
+      # Define the dimensions of the output square
+      output_side_length = 200  # Adjust this value as needed
+
+      output_width = 700
+      output_height = 800
+
+      # Define the coordinates of the output rectangle
+      output_rect = np.array([[0, 0], [output_width - 1, 0], [output_width - 1, output_height - 1], [0, output_height - 1]], dtype=np.float32)
+
+      # Calculate the perspective transformation matrix
+      perspective_matrix = cv2.getPerspectiveTransform(roi_corners.astype(np.float32), output_rect)
+
+      # Apply the perspective transformation to the original image
+      rect_roi = cv2.warpPerspective(image, perspective_matrix, (output_width, output_height))
+
+      roi_cropped = rect_roi
       
-       # Convert the cropped image to grayscale
-      gray_cropped = cv2.cvtColor(roi_cropped, cv2.COLOR_BGR2GRAY)
-
-      # Draw lines separating the columns
-      for i in range(0, INNER_COLS+1):
-        x = i * segment_width + padding
-        roi_cropped = cv2.line(roi_cropped, (x, padding), (x, _h-padding), (0, 255, 0), 2)
-
-      # Draw lines separating the rows
-      for i in range(0, INNER_ROWS+1):
-        y = i * segment_height + padding
-        roi_cropped = cv2.line(roi_cropped, (padding, y), (_w-padding, y), (0, 255, 0), 2)
-
-      # Display the cropped ROI in a separate window
-      cv2.imshow('Cropped ROI', roi_cropped)
+      # rotate 90 degrees
+      _w = output_width
+      _h = output_height
+      padding = 20
+      padding_x = padding
+      padding_y = padding + 10
+      # Calculate the dimensions of each segment
+      segment_width = (_w - padding_x * 2) // INNER_COLS
+      segment_height = (_h - padding_y * 2)  // INNER_ROWS
+      
+      # Convert the cropped image to grayscale
+      # gray_cropped = cv2.cvtColor(roi_cropped, cv2.COLOR_BGR2GRAY)
 
       # Loop through the grid and extract each segment
-      #for i in range(ROWS):
-      #  for j in range(COLS):
-      #    # Calculate the coordinates for the current segment
-      #    x_start = j * segment_width
-      #    y_start = i * segment_height
-      #    x_end = (j + 1) * segment_width
-      #    y_end = (i + 1) * segment_height
-      #    # Extract the segment
-      #    segment = roi_cropped[y_start:y_end, x_start:x_end]
-      #    # Display the segment in a separate window
-      #    cv2.imshow(f'Segment ({i}, {j})', segment)
-      #  # draw lines
+      for i in range(INNER_ROWS):
+        for j in range(INNER_COLS):
+          # Calculate the coordinates for the current segment
+          x_start = j * segment_width + padding_x
+          y_start = i * segment_height + padding_y
+          x_end = (j + 1) * segment_width + padding_x
+          y_end = (i + 1) * segment_height + padding_y
+          segment_corners = np.array([[x_start, y_start], [x_end, y_start], [x_end, y_end], [x_start, y_end]], dtype='float32')
+
+          # draw rect from segment_corners
+          for k in range(4):
+            start_point = segment_corners[k]
+            end_point = segment_corners[(k + 1) % 4]
+            # convert to int 
+            start_point = (int(start_point[0]), int(start_point[1]))
+            end_point = (int(end_point[0]), int(end_point[1]))
+            roi_cropped = cv2.line(roi_cropped, start_point, end_point, (0, 255, 0), 2)
+          
+          # Extract the segment
+          segment = roi_cropped[y_start:y_end, x_start:x_end]
+          
+          # gray segment
+          gray_segment = cv2.cvtColor(segment, cv2.COLOR_BGR2GRAY)
+          
+          # Perform template matching
+          matched_template, matched_filename = template_matching(gray_segment, self.templates)
+          matched_filename = matched_filename.split(".")[0]
+          roi_cropped = cv2.putText(roi_cropped, matched_filename, (x_start, y_start+20),  cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0) )
+
+          # Display the matched template
+          cv2.imshow(f'Matched Template ({i}, {j})', gray_segment)
+          
+          # Display the segment in a separate window
+          if self.save_frames == True:
+            # random id for now
+            id = np.random.randint(low=0, high=100000000000000)
+            filename = f'frames/segment_{i}_{j}_{id}.jpg'
+            cv2.imwrite(filename, segment)
+          # cv2.imshow(f'Segment ({i}, {j})', segment)
+        # draw lines
+      if self.save_frames == True:
+        # after saving, quit software
+        self.capture.release()
+        cv2.destroyAllWindows()
+        quit()
+      # Display the cropped ROI in a separate window
+      cv2.imshow('Cropped ROI', roi_cropped)
     return image
   
   def onDetectedMarker (self, corners, ids):
-    # print("onDetectedMarker")
-    #print("corners", corners)
-    print("ids", ids)
     for index, id in enumerate(ids):
       if id > COLS * ROWS:
         # invalid, continue
@@ -248,5 +290,4 @@ class ArcheReader:
         self.lastDetectMarkers[_index] = (id, center_point)
     # order lastDetectMarkers by id
     self.lastDetectMarkers = sorted(self.lastDetectMarkers, key=lambda x: x[0])
-    print("lastDetectMarkers", self.lastDetectMarkers)
   

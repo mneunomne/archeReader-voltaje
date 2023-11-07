@@ -10,3 +10,6 @@ THRESHOLD_1 = int(os.environ.get("THRESHOLD_1"))
 THRESHOLD_2 = int(os.environ.get("THRESHOLD_2"))
 MIN_LINE_LENGTH = int(os.environ.get("MIN_LINE_LENGTH"))
 MAX_LINE_GAP  = int(os.environ.get("MAX_LINE_GAP"))
+
+SEGMENT_WIDTH = 68
+SEGMENT_HEIGHT = 68

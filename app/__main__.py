@@ -5,10 +5,9 @@ from ArcheReader import ArcheReader
 # parse arguments
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument('-t', '--test', default=False, action='store_true')
+parser.add_argument('-s', '--save-frames', default=False, action='store_true')
+parser.add_argument('-d', '--debug', default=False, action='store_true')
 args = parser.parse_args()
-
-# check if test mode
-test = args.test 
 
 # capture element
 global capture
@@ -16,5 +15,5 @@ global capture
 capture = None
   
 if __name__ == "__main__":
-  archeReader = ArcheReader(test)
+  archeReader = ArcheReader(args)
   archeReader.run()
