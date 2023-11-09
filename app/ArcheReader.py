@@ -14,6 +14,14 @@ FOLDER_PATH = 'app/numerals/'
 
 TEST_FILE = 'app/test5.jpg'
 
+default_adaptiveThreshWinSizeMin = 3
+default_adaptiveThreshWinSizeMax = 16
+default_adaptiveThreshWinSizeStep = 13
+default_adaptiveThreshConstant = 2
+default_minMarkerPerimeterRate = 223
+default_maxMarkerPerimeterRate = 40
+default_polygonalApproxAccuracyRate = 50
+
 class ArcheReader:
   
   capture = None
@@ -41,26 +49,26 @@ class ArcheReader:
     self.templates = load_templates(FOLDER_PATH)
     
     self.save_frames = args.save_frames
-    self.adaptiveThreshWinSizeMin = 3
-    self.adaptiveThreshWinSizeMax = 23
-    self.adaptiveThreshWinSizeStep = 10
-    self.adaptiveThreshConstant = 8
-    self.minMarkerPerimeterRate = 80 # / 1000
-    self.maxMarkerPerimeterRate = 40 # / 10
-    self.polygonalApproxAccuracyRate = 50 # / 1000
+    self.adaptiveThreshWinSizeMin = default_adaptiveThreshWinSizeMin
+    self.adaptiveThreshWinSizeMax = default_adaptiveThreshWinSizeMax
+    self.adaptiveThreshWinSizeStep = default_adaptiveThreshWinSizeStep
+    self.adaptiveThreshConstant = default_adaptiveThreshConstant
+    self.minMarkerPerimeterRate = default_minMarkerPerimeterRate # / 1000
+    self.maxMarkerPerimeterRate = default_maxMarkerPerimeterRate # / 10
+    self.polygonalApproxAccuracyRate = default_polygonalApproxAccuracyRate # / 1000
     cv2.namedWindow('arche-reading')
-    # self.createTrackbars()
+    self.createTrackbars()
     self.init()
     
   def createTrackbars(self):
     # Create trackbars
-    cv2.createTrackbar('adaptiveThreshWinSizeMin', 'arche-reading', 3, 100, self.on_trackbar)
-    cv2.createTrackbar('adaptiveThreshWinSizeMax', 'arche-reading', 23, 100, self.on_trackbar)
-    cv2.createTrackbar('adaptiveThreshWinSizeStep', 'arche-reading', 10, 100, self.on_trackbar)
-    cv2.createTrackbar('adaptiveThreshConstant', 'arche-reading', 8, 100, self.on_trackbar)
-    cv2.createTrackbar('minMarkerPerimeterRate', 'arche-reading', 160, 1000, self.on_trackbar)
-    cv2.createTrackbar('maxMarkerPerimeterRate', 'arche-reading', 40, 100,  self.on_trackbar)
-    cv2.createTrackbar('polygonalApproxAccuracyRate', 'arche-reading', 50, 1000, self.on_trackbar)
+    cv2.createTrackbar('adaptiveThreshWinSizeMin', 'arche-reading', default_adaptiveThreshWinSizeMin, 100, self.on_trackbar)
+    cv2.createTrackbar('adaptiveThreshWinSizeMax', 'arche-reading', default_adaptiveThreshWinSizeMax, 100, self.on_trackbar)
+    cv2.createTrackbar('adaptiveThreshWinSizeStep', 'arche-reading', default_adaptiveThreshWinSizeStep, 100, self.on_trackbar)
+    cv2.createTrackbar('adaptiveThreshConstant', 'arche-reading', default_adaptiveThreshConstant, 100, self.on_trackbar)
+    cv2.createTrackbar('minMarkerPerimeterRate', 'arche-reading', default_minMarkerPerimeterRate, 1000, self.on_trackbar)
+    cv2.createTrackbar('maxMarkerPerimeterRate', 'arche-reading', default_maxMarkerPerimeterRate, 100,  self.on_trackbar)
+    cv2.createTrackbar('polygonalApproxAccuracyRate', 'arche-reading', default_polygonalApproxAccuracyRate, 1000, self.on_trackbar)
   
   def on_trackbar(self, value):
     # Update parameters based on trackbar values
