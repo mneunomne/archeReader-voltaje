@@ -3,36 +3,16 @@ from globals import *
 from image_processing import *
 import numpy as np
 import cv2.aruco as aruco
-
 from utils import list_ports, get_center_point, load_templates, perspective_transform, template_matching
-
-COLS = 5
-ROWS = 6
-INNER_COLS = 7
-INNER_ROWS = 8
-FOLDER_PATH = 'app/numerals/'
-
-TEST_FILE = 'app/test5.jpg'
-
-default_adaptiveThreshWinSizeMin = 3
-default_adaptiveThreshWinSizeMax = 16
-default_adaptiveThreshWinSizeStep = 13
-default_adaptiveThreshConstant = 2
-default_minMarkerPerimeterRate = 223
-default_maxMarkerPerimeterRate = 40
-default_polygonalApproxAccuracyRate = 50
+import threading
+from flask_server import app, sendVideoOutput, sendCroppedOutput, socketio
+from socket_connection import connectSocket
+import json  
 
 class ArcheReader:
   
   capture = None
-  
-  # default values for canny edge detection and hough lines
-  threshold1 = 7
-  threshold2 = 12
-  minLineLength = 40
-  maxLineGap = 75
-  set_update= True
-  
+    
   lastDetectSegment = None
   
   lastDetectMarkers = []
@@ -44,45 +24,30 @@ class ArcheReader:
     # check if test mode
     self.test = args.test 
     self.debug = args.debug
+        
+    # start flask
+    if (args.flask):
+      thread_flask = threading.Thread(target=socketio.run, args=(app, FLASK_SERVER_IP, FLASK_SERVER_PORT,))
+      thread_flask.start()
     
     # load templates
     self.templates = load_templates(FOLDER_PATH)
     
     self.save_frames = args.save_frames
-    self.adaptiveThreshWinSizeMin = default_adaptiveThreshWinSizeMin
-    self.adaptiveThreshWinSizeMax = default_adaptiveThreshWinSizeMax
-    self.adaptiveThreshWinSizeStep = default_adaptiveThreshWinSizeStep
-    self.adaptiveThreshConstant = default_adaptiveThreshConstant
-    self.minMarkerPerimeterRate = default_minMarkerPerimeterRate # / 1000
-    self.maxMarkerPerimeterRate = default_maxMarkerPerimeterRate # / 10
-    self.polygonalApproxAccuracyRate = default_polygonalApproxAccuracyRate # / 1000
+    self.adaptiveThreshWinSizeMin = aruco_defaults["adaptiveThreshWinSizeMin"]
+    self.adaptiveThreshWinSizeMax = aruco_defaults["adaptiveThreshWinSizeMax"]
+    self.adaptiveThreshWinSizeStep = aruco_defaults["adaptiveThreshWinSizeStep"]
+    self.adaptiveThreshConstant = aruco_defaults["adaptiveThreshConstant"]
+    self.minMarkerPerimeterRate = aruco_defaults["minMarkerPerimeterRate"] # / 1000
+    self.maxMarkerPerimeterRate = aruco_defaults["maxMarkerPerimeterRate"] # / 10
+    self.polygonalApproxAccuracyRate = aruco_defaults["polygonalApproxAccuracyRate"] # / 1000
     cv2.namedWindow('arche-reading')
     self.createTrackbars()
     self.init()
     
-  def createTrackbars(self):
-    # Create trackbars
-    cv2.createTrackbar('adaptiveThreshWinSizeMin', 'arche-reading', default_adaptiveThreshWinSizeMin, 100, self.on_trackbar)
-    cv2.createTrackbar('adaptiveThreshWinSizeMax', 'arche-reading', default_adaptiveThreshWinSizeMax, 100, self.on_trackbar)
-    cv2.createTrackbar('adaptiveThreshWinSizeStep', 'arche-reading', default_adaptiveThreshWinSizeStep, 100, self.on_trackbar)
-    cv2.createTrackbar('adaptiveThreshConstant', 'arche-reading', default_adaptiveThreshConstant, 100, self.on_trackbar)
-    cv2.createTrackbar('minMarkerPerimeterRate', 'arche-reading', default_minMarkerPerimeterRate, 1000, self.on_trackbar)
-    cv2.createTrackbar('maxMarkerPerimeterRate', 'arche-reading', default_maxMarkerPerimeterRate, 100,  self.on_trackbar)
-    cv2.createTrackbar('polygonalApproxAccuracyRate', 'arche-reading', default_polygonalApproxAccuracyRate, 1000, self.on_trackbar)
-  
-  def on_trackbar(self, value):
-    # Update parameters based on trackbar values
-    self.adaptiveThreshWinSizeMin = cv2.getTrackbarPos('adaptiveThreshWinSizeMin', 'arche-reading')
-    self.adaptiveThreshWinSizeMax = cv2.getTrackbarPos('adaptiveThreshWinSizeMax', 'arche-reading')
-    self.adaptiveThreshWinSizeStep = cv2.getTrackbarPos('adaptiveThreshWinSizeStep', 'arche-reading')
-    self.adaptiveThreshConstant = cv2.getTrackbarPos('adaptiveThreshConstant', 'arche-reading')
-    self.minMarkerPerimeterRate = cv2.getTrackbarPos('minMarkerPerimeterRate', 'arche-reading')
-    self.maxMarkerPerimeterRate = cv2.getTrackbarPos('maxMarkerPerimeterRate', 'arche-reading')
-    self.polygonalApproxAccuracyRate = cv2.getTrackbarPos('polygonalApproxAccuracyRate', 'arche-reading')
-    
   def init(self):
     # if test enabled, use static image
-    self.run()
+    self.run_opencv()
   
   def start_cam(self):
     # detect available cameras
@@ -106,16 +71,27 @@ class ArcheReader:
     else:
       print("Cannot open camera")
     
-  def run(self):
+  def run_opencv(self):
+    
+    # create window
+    cv2.startWindowThread()
+    cv2.namedWindow("arche-reading")
+    cv2.namedWindow("cropped")
+
     while True:
       # display image
-      if self.set_update:
-        image = self.get_image()
-        image = self.process_image(image)
-        cv2.imshow('arche-reading', image)
-        # self.set_update = False
+      image = self.get_image()
+      image = self.process_image(image)
+      
+      video_output = image.copy()
+        # send video to flask
+      sendVideoOutput(video_output)
+      
+      
+      cv2.imshow('arche-reading', image)
       if cv2.waitKey(1) & 0xFF == ord('q'):
         break
+
     # When everything done, release the capture
     self.capture.release()
     cv2.destroyAllWindows()
@@ -227,6 +203,8 @@ class ArcheReader:
       
       # Convert the cropped image to grayscale
       # gray_cropped = cv2.cvtColor(roi_cropped, cv2.COLOR_BGR2GRAY)
+      
+      segment_data = []
 
       # Loop through the grid and extract each segment
       for i in range(INNER_ROWS):
@@ -257,9 +235,17 @@ class ArcheReader:
           matched_template, matched_filename = template_matching(gray_segment, self.templates)
           matched_filename = matched_filename.split(".")[0]
           roi_cropped = cv2.putText(roi_cropped, matched_filename, (x_start, y_start+20),  cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0) )
-
+          
+          # segment data
+          data = {
+            "matched_filename": matched_filename,
+            "row": i,
+            "col": j,
+          }
+          segment_data.append(data)
+          
           # Display the matched template
-          cv2.imshow(f'Matched Template ({i}, {j})', gray_segment)
+          # cv2.imshow(f'Matched Template ({i}, {j})', gray_segment)
           
           # Display the segment in a separate window
           if self.save_frames == True:
@@ -269,13 +255,18 @@ class ArcheReader:
             cv2.imwrite(filename, segment)
           # cv2.imshow(f'Segment ({i}, {j})', segment)
         # draw lines
+      
+      if segment_data != []:
+        # send segment data to flask
+        self.decode_segments(segment_data)
+      
       if self.save_frames == True:
         # after saving, quit software
         self.capture.release()
         cv2.destroyAllWindows()
         quit()
       # Display the cropped ROI in a separate window
-      cv2.imshow('Cropped ROI', roi_cropped)
+      cv2.imshow('cropped', roi_cropped)
     return image
   
   def onDetectedMarker (self, corners, ids):
@@ -298,4 +289,31 @@ class ArcheReader:
         self.lastDetectMarkers[_index] = (id, center_point)
     # order lastDetectMarkers by id
     self.lastDetectMarkers = sorted(self.lastDetectMarkers, key=lambda x: x[0])
+    
+  def decode_segments(self, data):
+    print("segment_data", data)
+    json_object = json.dumps(data, indent = 4) 
+    socketio.emit('segment_data', json_object)
+    # decode segments
+    pass
   
+    
+  def createTrackbars(self):
+    # Create trackbars
+    cv2.createTrackbar('adaptiveThreshWinSizeMin', 'arche-reading', aruco_defaults["adaptiveThreshWinSizeMin"], 100, self.on_trackbar)
+    cv2.createTrackbar('adaptiveThreshWinSizeMax', 'arche-reading', aruco_defaults["adaptiveThreshWinSizeMax"], 100, self.on_trackbar)
+    cv2.createTrackbar('adaptiveThreshWinSizeStep', 'arche-reading', aruco_defaults["adaptiveThreshWinSizeStep"], 100, self.on_trackbar)
+    cv2.createTrackbar('adaptiveThreshConstant', 'arche-reading', aruco_defaults["adaptiveThreshConstant"], 100, self.on_trackbar)
+    cv2.createTrackbar('minMarkerPerimeterRate', 'arche-reading', aruco_defaults["minMarkerPerimeterRate"], 1000, self.on_trackbar)
+    cv2.createTrackbar('maxMarkerPerimeterRate', 'arche-reading', aruco_defaults["maxMarkerPerimeterRate"], 100,  self.on_trackbar)
+    cv2.createTrackbar('polygonalApproxAccuracyRate', 'arche-reading', aruco_defaults["polygonalApproxAccuracyRate"], 1000, self.on_trackbar)
+    
+  def on_trackbar(self, value):
+    # Update parameters based on trackbar values
+    self.adaptiveThreshWinSizeMin = cv2.getTrackbarPos('adaptiveThreshWinSizeMin', 'arche-reading')
+    self.adaptiveThreshWinSizeMax = cv2.getTrackbarPos('adaptiveThreshWinSizeMax', 'arche-reading')
+    self.adaptiveThreshWinSizeStep = cv2.getTrackbarPos('adaptiveThreshWinSizeStep', 'arche-reading')
+    self.adaptiveThreshConstant = cv2.getTrackbarPos('adaptiveThreshConstant', 'arche-reading')
+    self.minMarkerPerimeterRate = cv2.getTrackbarPos('minMarkerPerimeterRate', 'arche-reading')
+    self.maxMarkerPerimeterRate = cv2.getTrackbarPos('maxMarkerPerimeterRate', 'arche-reading')
+    self.polygonalApproxAccuracyRate = cv2.getTrackbarPos('polygonalApproxAccuracyRate', 'arche-reading')
