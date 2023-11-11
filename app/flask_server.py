@@ -1,5 +1,6 @@
 from flask import Flask, render_template, Response
 from flask_socketio import SocketIO, send, emit
+from image_processing import ImageProcessor
 import cv2
 
 app = Flask(__name__, static_url_path='', static_folder='static', template_folder='static')
@@ -9,6 +10,8 @@ socketio = SocketIO(app)
 
 video_output = None
 cropped_output = None
+
+imageProcessor = ImageProcessor()
 
 def sendVideoOutput(frame):
     global video_output
@@ -44,6 +47,9 @@ def gen_cropped():  # generate frame by frame from camera
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')  # concat frame one by one and show result
 
+def getState():
+    global ready_to_read
+    return ready_to_read
 
 @app.route('/video_feed')
 def video_feed():
@@ -52,11 +58,22 @@ def video_feed():
 
 @app.route('/movement_end/<int:direction>')
 def on_movement_end(direction):
+    global ready_to_read
+    ready_to_read = True
     print('movement end', direction)
     return Response('done', mimetype='text/plain')
 
 @app.route('/test/<string:json>', methods=['GET', 'POST'])
 def test(json):
+    global video_output
+    print('video_output', video_output)
+    if video_output is None:
+        print('cropped_output is None')
+        return Response('fail', mimetype='text/plain')
+    else:
+        imageProcessor.process_image(video_output)
+    
+    ready_to_read = True
     print('received test', json)
     return Response('done', mimetype='text/plain')
 

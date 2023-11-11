@@ -1,6 +1,5 @@
 import argparse
 from ArcheReader import ArcheReader
-# from socket_connection import connectSocket
 
 # parse arguments
 parser = argparse.ArgumentParser(description='Process some integers.')
@@ -12,10 +11,7 @@ parser.add_argument('-f', '--flask', default=False, action='store_true')
 
 args = parser.parse_args()
 
-# capture element
-global capture
-
-capture = None
+archeReader = None
   
 if __name__ == "__main__":
   archeReader = ArcheReader(args)
