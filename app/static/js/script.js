@@ -10,25 +10,20 @@ const initPlanetarium = function (w, h) {
     'projection': 'gnomic',
     //'ra': 83.8220833,
     //'dec': -5.3911111,
+    latitude: default_latlng[0],
+    longitude: default_latlng[1],
     showplanets: true,
+    // showorbits: true,
+    az: 0,
     width: w,
     height: h / 2,
     'constellations': true,
     constellationlabels: true,
     lang: 'es',
     fontsize: '18px',
-    clock: new Date("November 12, 2023 01:21:00"),
+    clock: new Date("January 12, 2023 01:21:00"),
   });
 
-  planetarium1.addPointer({
-    'ra':83.8220792,
-    'dec':-5.3911111,
-    'label':'Orion Nebula',
-    'img':'http://server7.sky-map.org/imgcut?survey=DSS2&w=128&h=128&ra=5.58813861333333&de=-5.3911111&angle=1.25&output=PNG',
-    'url':'http://simbad.u-strasbg.fr/simbad/sim-id?Ident=M42',
-    'credit':'Wikisky',
-    'colour':'rgb(255,220,220)'
-  })
 }
 
 const initMap = function () {
@@ -40,10 +35,6 @@ const initMap = function () {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
   }).addTo(map);
 
-  // Add a marker for Bogotá
-  L.marker(default_latlng).addTo(map)
-    .bindPopup('Bogotá, Colombia')
-    .openPopup();
 }
 
 const updateMapPosition = function (lat, lon, zoom = 13) {
@@ -52,9 +43,12 @@ const updateMapPosition = function (lat, lon, zoom = 13) {
 
 const updatePlanetariumPosition = function (lat, lon, timestamp) {
   planetarium1.setClock(timestamp);
-  planetarium1.setRA(lat);
-  planetarium1.setDec(lon);
-  planetarium1.redraw();
+  planetarium1.setLatitude(lat);
+  planetarium1.setLongitude(lon);
+
+  //planetarium1.setRA(lat);
+  //planetarium1.setDec(lon);
+  planetarium1.drawImmediate();
 }
 
 S(document).ready(function() {
@@ -67,9 +61,12 @@ S(document).ready(function() {
   document.addEventListener('keyup', function(event) {
     if (event.key == 't') {
       // test
-      let lat = default_latlng[0] + ((2 * Math.random() - 1) * 0.1);
-      let lon = default_latlng[1] + ((2 * Math.random() - 1) * 0.1);
+      let lat = default_latlng[0] + ((2 * Math.random() - 1) * 1);
+      let lon = default_latlng[1] + ((2 * Math.random() - 1) * 1);
       updateMapPosition(lat, lon);
+      let now = new Date().getTime()
+      let nowDate = new Date(now + (Math.random() * 100000000000));
+      updatePlanetariumPosition(lat, lon, nowDate);
     } 
   });
 });
