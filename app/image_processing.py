@@ -32,8 +32,8 @@ class ImageProcessor:
 
     def process_image(self, raw_image):
         # create window
-        cv2.startWindowThread()
-        cv2.namedWindow("processor")
+        # cv2.startWindowThread()
+        # cv2.namedWindow("processor")
         
         image = raw_image.copy()
         # Convert the image to grayscale (if necessary)
@@ -51,7 +51,6 @@ class ImageProcessor:
         parameters.minMarkerPerimeterRate = self.minMarkerPerimeterRate / 1000
         parameters.maxMarkerPerimeterRate = self.maxMarkerPerimeterRate / 10
         parameters.polygonalApproxAccuracyRate = self.polygonalApproxAccuracyRate / 1000
-        
     
         detector = aruco.ArucoDetector(aruco_dict, parameters)
         
@@ -60,15 +59,14 @@ class ImageProcessor:
         # Detect markers
         corners, ids, rejectedImgPoints = detector.detectMarkers(gray)
         
-        self.archeReader.show_image(image)
+        # self.archeReader.show_image(image)
         
         print("ids", ids)
         
-        self.archeReader.set_detections(ids)
-        
         # Draw the detected markers on the image
         if ids is not None:
-            return self.processDetectedMarkers(image, corners, ids)
+            self.archeReader.set_detections(corners, ids)
+            # return self.processDetectedMarkers(image, corners, ids)
         return []
 
     def processDetectedMarkers(self, image, corners, ids):

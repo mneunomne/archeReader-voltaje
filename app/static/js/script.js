@@ -49,6 +49,9 @@ const updatePlanetariumPosition = function (lat, lon, timestamp) {
   //planetarium1.setRA(lat);
   //planetarium1.setDec(lon);
   planetarium1.drawImmediate();
+  // pan to jupiter
+  //planetarium1.panTo(83.8220833, -5.3911111);
+  
 }
 
 S(document).ready(function() {
