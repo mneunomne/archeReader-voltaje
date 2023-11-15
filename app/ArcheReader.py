@@ -22,6 +22,9 @@ class ArcheReader:
     # check if test mode
     self.test = args.test 
     self.debug = args.debug
+    
+    self.test_parameters = args.parameters
+    
     self.detections = []
     
     self.detections_queue = queue.Queue()  # Queue for passing detections between threads
@@ -45,7 +48,8 @@ class ArcheReader:
     self.maxMarkerPerimeterRate = aruco_defaults["maxMarkerPerimeterRate"] # / 10
     self.polygonalApproxAccuracyRate = aruco_defaults["polygonalApproxAccuracyRate"] # / 1000
     cv2.namedWindow('arche-reading')
-    #self.createTrackbars()
+    if self.test_parameters:
+      self.createTrackbars()
     self.init()
     
   def init(self):
@@ -61,7 +65,6 @@ class ArcheReader:
   def set_detections(self, detections):
     print("detections", detections)
     self.detections = detections
-  
     
   def createTrackbars(self):
     # Create trackbars
@@ -82,6 +85,13 @@ class ArcheReader:
     self.minMarkerPerimeterRate = cv2.getTrackbarPos('minMarkerPerimeterRate', 'arche-reading')
     self.maxMarkerPerimeterRate = cv2.getTrackbarPos('maxMarkerPerimeterRate', 'arche-reading')
     self.polygonalApproxAccuracyRate = cv2.getTrackbarPos('polygonalApproxAccuracyRate', 'arche-reading')
+    print("adaptiveThreshWinSizeMin", self.adaptiveThreshWinSizeMin)
+    print("adaptiveThreshWinSizeMax", self.adaptiveThreshWinSizeMax)
+    print("adaptiveThreshWinSizeStep", self.adaptiveThreshWinSizeStep)
+    print("adaptiveThreshConstant", self.adaptiveThreshConstant)
+    print("minMarkerPerimeterRate", self.minMarkerPerimeterRate)
+    print("maxMarkerPerimeterRate", self.maxMarkerPerimeterRate)
+    print("polygonalApproxAccuracyRate", self.polygonalApproxAccuracyRate)
     
   def run_opencv(self):
     
@@ -92,22 +102,28 @@ class ArcheReader:
 
     while True:
       
-      # Check the queue for new detections
-      try:
-          new_detections = self.detections_queue.get_nowait()
-          self.display_detections(new_detections)
-      except queue.Empty:
-          pass
-      
-      # display image
+       # display image
       image = self.get_image()
       
       video_output = image.copy()
-        # send video to flask
-      sendVideoOutput(video_output)
-      print("self.detections", self.detections)
+            
+      if self.test_parameters:
+        video_output = self.test_detection(video_output)
+      else:
+        # Check the queue for new detections
+        try:
+            self.detections = self.detections_queue.get_nowait()
+        except queue.Empty:
+            pass
       
-      cv2.imshow('arche-reading', image)
+      if len(self.detections) > 0:
+        video_output = self.display_detections(self.detections, video_output)
+        
+      # send video to flask
+      sendVideoOutput(video_output)
+      # print("self.detections", self.detections)
+      
+      cv2.imshow('arche-reading', video_output)
       if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
@@ -115,11 +131,16 @@ class ArcheReader:
     self.capture.release()
     cv2.destroyAllWindows()
     
-  def display_detections(self, new_detections):
+  def display_detections(self, new_detections, video_output):
     # Update the OpenCV display with new detections
     # This method should be called from the main thread
     print("New Detections:", new_detections)
-    # Implement your display logic here
+    markers = new_detections[0]
+    ids = new_detections[1]
+    
+    # diaplay markers here:
+    image = aruco.drawDetectedMarkers(video_output, markers, ids)
+    return image
     
   def set_detections(self, detections):
     print("detections", detections)
@@ -145,4 +166,28 @@ class ArcheReader:
     else:
       print("Cannot open camera")
 
+  def test_detection(self, raw_image):
+    image = raw_image.copy()
+    # Convert the image to grayscale (if necessary)
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
+    # Load the ArUco dictionary (you may need to adjust the dictionary type)
+    aruco_dict = aruco.getPredefinedDictionary(aruco.DICT_4X4_1000)
+    
+    # Initialize the detector parameters
+    parameters = aruco.DetectorParameters()
+    parameters.adaptiveThreshWinSizeMin = self.adaptiveThreshWinSizeMin
+    parameters.adaptiveThreshWinSizeMax = self.adaptiveThreshWinSizeMax
+    parameters.adaptiveThreshWinSizeStep = self.adaptiveThreshWinSizeStep
+    parameters.adaptiveThreshConstant = self.adaptiveThreshConstant
+    parameters.minMarkerPerimeterRate = self.minMarkerPerimeterRate / 1000
+    parameters.maxMarkerPerimeterRate = self.maxMarkerPerimeterRate / 10
+    parameters.polygonalApproxAccuracyRate = self.polygonalApproxAccuracyRate / 1000
+    # detect markers
+    detector = aruco.ArucoDetector(aruco_dict, parameters)
+    
+    # Detect markers
+    corners, ids, rejectedImgPoints = detector.detectMarkers(gray)
+    
+    image = aruco.drawDetectedMarkers(image, corners, ids)
+    return image

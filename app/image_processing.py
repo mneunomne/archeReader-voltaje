@@ -6,9 +6,8 @@ import cv2
 import cv2.aruco as aruco
 import numpy as np
 from math import atan2, cos, sin, sqrt, pi, floor
-
 from globals import *
-
+        
 class ImageProcessor:
     
     lastDetectSegment = None
@@ -30,7 +29,7 @@ class ImageProcessor:
         self.save_frames = args.save_frames
         self.archeReader = archeReader
 
-    def process_image(self, raw_image):
+    def process_image(self, raw_image, segmentIndex):
         # create window
         # cv2.startWindowThread()
         # cv2.namedWindow("processor")
@@ -53,22 +52,35 @@ class ImageProcessor:
         parameters.polygonalApproxAccuracyRate = self.polygonalApproxAccuracyRate / 1000
     
         detector = aruco.ArucoDetector(aruco_dict, parameters)
-        
-        print("raw_image", gray.shape)
-        
+                
         # Detect markers
         corners, ids, rejectedImgPoints = detector.detectMarkers(gray)
         
         # self.archeReader.show_image(image)
         
+        # self.archeReader.draw_detections(image, corners, ids)
+        
         print("ids", ids)
         
-        # Draw the detected markers on the image
-        if ids is not None:
-            self.archeReader.set_detections(corners, ids)
-            # return self.processDetectedMarkers(image, corners, ids)
-        return []
-
+        is_valid = self.validateMarkers(image, corners, ids, segmentIndex)
+        
+        detections = (corners, ids)
+        
+        self.archeReader.set_detections(detections)
+        
+        if is_valid:
+            # self.archeReader.validate_detections()
+            return True
+        else:
+            return False
+    
+    def validateMarkers(self, image, corners, ids, segmentIndex):
+        if ids is None:
+            return False
+        if len(ids) < 4:
+            return False
+        return True
+    
     def processDetectedMarkers(self, image, corners, ids):
         image = aruco.drawDetectedMarkers(image, corners, ids)
         # store last detected markers...
@@ -197,6 +209,10 @@ class ImageProcessor:
     
     def getDetectedMarkers(self):
         return self.lastDetectMarkers
+    
+    
+    def validateSegment(self, segment):
+        return False
     
     def onDetectedMarker (self, corners, ids):
         for index, id in enumerate(ids):

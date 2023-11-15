@@ -11,6 +11,8 @@ socketio = SocketIO(app)
 video_output = None
 cropped_output = None
 
+current_segment_index = 0
+
 imageProcessor = ImageProcessor()
 
 def sendVideoOutput(frame):
@@ -72,9 +74,26 @@ def test(json):
         return Response('fail', mimetype='text/plain')
     else:
         imageProcessor.process_image(video_output)
-    
     ready_to_read = True
     print('received test', json)
+    return Response('done', mimetype='text/plain')
+
+@app.route('/on_segment/<string:segmentIndex>', methods=['GET', 'POST'])
+def on_segment(segmentIndex):
+    print('received segmentIndex', segmentIndex)
+    global video_output
+    if video_output is None:
+        print('cropped_output is None')
+        return Response('fail', mimetype='text/plain')
+    else:
+        is_valid = False
+        attempts = 0
+        while not is_valid and attempts < 1000:
+            is_valid = imageProcessor.process_image(video_output, segmentIndex)
+            print('is_valid', is_valid)
+            if is_valid: 
+                attempts = 1000
+    ready_to_read = True
     return Response('done', mimetype='text/plain')
 
 @app.route('/cropped_feed')

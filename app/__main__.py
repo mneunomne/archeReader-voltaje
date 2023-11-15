@@ -8,6 +8,7 @@ parser.add_argument('-s', '--save-frames', default=False, action='store_true')
 parser.add_argument('-d', '--debug', default=False, action='store_true')
 parser.add_argument('-k', '--kiosk', default=False, action='store_true')
 parser.add_argument('-f', '--flask', default=False, action='store_true')
+parser.add_argument('-p', '--parameters', default=False, action='store_true')
 
 args = parser.parse_args()
 

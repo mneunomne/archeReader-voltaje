@@ -5,6 +5,7 @@ var map;
 var default_latlng = [4.6097, -74.0817]; // Bogotá
 
 const initPlanetarium = function (w, h) {
+  let d = new Date("-004235-11-14"); 
   planetarium1 = S.virtualsky({
     id: 'skymap',
     'projection': 'gnomic',
@@ -21,7 +22,7 @@ const initPlanetarium = function (w, h) {
     constellationlabels: true,
     lang: 'es',
     fontsize: '18px',
-    clock: new Date("January 12, 2023 01:21:00"),
+    clock: d,
   });
 
 }
