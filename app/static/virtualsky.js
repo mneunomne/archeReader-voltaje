@@ -386,6 +386,7 @@ function VirtualSky(input){
 		'stereo': {
 			title: 'Stereographic projection',
 			azel2xy: function(az,el,w,h){
+				//console.log("Stereooooooo 2")
 				var f = 0.42;
 				var sinel1 = 0;
 				var cosel1 = 1;
@@ -397,6 +398,7 @@ function VirtualSky(input){
 				return {x:(w/2+f*k*h*cosel*sinaz),y:(h-f*k*h*(cosel1*sinel-sinel1*cosel*cosaz)),el:el};
 			},
 			xy2azel: function(x, y, w, h) {
+				//console.log("Stereooooooo")
 				var f = 0.42;
 				var sinel1 = 0;
 				var cosel1 = 1;

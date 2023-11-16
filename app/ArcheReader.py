@@ -243,9 +243,14 @@ class ArcheReader:
     return segment_data, roi_cropped
   
   def decode_segment_data(self, segment_data):
+    # read data from top to bottom and left to right
+    segment_data = sorted(segment_data, key=lambda x: (x["col"], x["row"]))
     s = ""
     for d in segment_data:
-      s += d["matched_filename"] + " "
+      if d["matched_filename"] == '10':
+        s += "0"
+      else:
+        s += d["matched_filename"]
     return s
     
   def display_detections(self, new_detections, video_output):
