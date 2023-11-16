@@ -63,7 +63,6 @@ class ArcheReader:
     print("working_ports", working_ports)
     
   def set_detections(self, detections):
-    print("detections", detections)
     self.detections = detections
     
   def createTrackbars(self):
@@ -226,9 +225,10 @@ class ArcheReader:
         gray_segment = cv2.cvtColor(segment, cv2.COLOR_BGR2GRAY)
         
         # Perform template matching
-        matched_template, matched_filename = template_matching(gray_segment, self.templates)
+        matched_template, matched_filename, percentage = template_matching(gray_segment, self.templates)
         matched_filename = matched_filename.split(".")[0]
         roi_cropped = cv2.putText(roi_cropped, matched_filename, (x_start, y_start+20),  cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0) )
+        roi_cropped = cv2.putText(roi_cropped, percentage, (x_start, y_start+40),  cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0) )
         
         # segment data
         data = {
@@ -256,7 +256,6 @@ class ArcheReader:
     return image
     
   def set_detections(self, detections):
-    print("detections", detections)
     self.detections = detections
 
     # Put the new detections in the queue for the main thread to pick up

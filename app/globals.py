@@ -26,13 +26,13 @@ INNER_ROWS = 8
 
 # paths
 FOLDER_PATH = 'app/numerals/'
-TEST_FILE = 'app/test_images/test5.jpg'
+TEST_FILE = 'app/test_images/test6.jpg'
 
 # aruco marker settings
 aruco_defaults = {
   "adaptiveThreshWinSizeMin": 3,
   "adaptiveThreshWinSizeMax": 29,
-  "adaptiveThreshWinSizeStep": 22,
+  "adaptiveThreshWinSizeStep": 7,
   "adaptiveThreshConstant": 3,
   "minMarkerPerimeterRate": 66,
   "maxMarkerPerimeterRate": 40,

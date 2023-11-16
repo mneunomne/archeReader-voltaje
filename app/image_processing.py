@@ -79,13 +79,16 @@ class ImageProcessor:
         if len(ids) < 4:
             return False, (corners, ids)
 
-        top_left = segmentIndex + 1
-        top_right = segmentIndex + 2
+        top_left = segmentIndex
+        top_right = segmentIndex + 1
         bottom_left = top_left + COLS
         bottom_right = top_right + COLS
         
         # find if ids contains top_left, top_right, bottom_left, bottom_right
         corner_ids = [top_left, top_right, bottom_left, bottom_right]
+        
+        print("corner_ids", corner_ids, ids)
+        
         
         for index, id in enumerate(ids):
             if id in corner_ids:
@@ -93,6 +96,7 @@ class ImageProcessor:
                 validated_markers.append(corners[index])
                 validated_ids = np.append(validated_ids, id)
                 corner_ids.remove(id)
+        
         print("len(corner_ids)", len(corner_ids))
         if len(corner_ids) > 0:
             return False, (corners, ids)
