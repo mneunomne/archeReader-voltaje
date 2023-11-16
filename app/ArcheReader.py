@@ -2,7 +2,7 @@ import cv2
 from globals import *
 import numpy as np
 import cv2.aruco as aruco
-from utils import list_ports, load_templates
+from utils import list_ports, load_templates, get_center_point, template_matching
 from flask_server import app, sendVideoOutput, sendCroppedOutput, socketio, imageProcessor
 from socket_connection import connectSocket
 import threading
@@ -113,6 +113,10 @@ class ArcheReader:
         # Check the queue for new detections
         try:
             self.detections = self.detections_queue.get_nowait()
+            segment_data, roi_cropped = self.process_detections(self.detections, image)
+            final_data = self.decode_segment_data(segment_data)
+            print("segment_data", segment_data)
+            cv2.imshow('cropped', roi_cropped)
         except queue.Empty:
             pass
       
@@ -130,11 +134,120 @@ class ArcheReader:
     # When everything done, release the capture
     self.capture.release()
     cv2.destroyAllWindows()
+  
+  def process_detections(self, new_detections, image):
     
+    markers = new_detections[0]
+    ids = new_detections[1]
+    
+    corners = [] # list of tuples (center_point, id)
+    
+    for index, marker in enumerate(markers):
+      center_point = get_center_point(marker)
+      corners.append((ids[index], center_point))
+    
+    # order corners
+    ordered_corners = sorted(corners, key=lambda x: x[0])
+    ordered_center_points = [corner[1] for corner in ordered_corners]
+    ordered_center_points = [ordered_corners[0][1], ordered_corners[1][1], ordered_corners[3][1], ordered_corners[2][1]]
+    
+    # Define the ROI using the corner points of the markers
+    roi_corners = np.array([marker for marker in ordered_center_points], dtype=np.int32)
+    roi_corners = roi_corners.reshape((-1, 1, 2))
+    
+    # Create a mask for the ROI
+    mask = np.zeros_like(image)
+    cv2.fillPoly(mask, [roi_corners], (255, 255, 255))
+    
+    # Apply the mask to the original image
+    roi_image = cv2.bitwise_and(image, mask)
+    
+    # Get the bounding box of the ROI
+    x, y, w, h = cv2.boundingRect(roi_corners)
+    
+    # Crop the image using the bounding box
+    roi_cropped = roi_image[y:y+h, x:x+w]
+    
+    # size of output image segment
+    output_width = SEGMENT_OUTPUT_WIDTH
+    output_height = SEGMENT_OUTPUT_HEIGHT
+
+    # Define the coordinates of the output rectangle
+    output_rect = np.array([[0, 0], [output_width - 1, 0], [output_width - 1, output_height - 1], [0, output_height - 1]], dtype=np.float32)
+
+    # Calculate the perspective transformation matrix
+    perspective_matrix = cv2.getPerspectiveTransform(roi_corners.astype(np.float32), output_rect)
+
+    # Apply the perspective transformation to the original image
+    rect_roi = cv2.warpPerspective(image, perspective_matrix, (output_width, output_height))
+
+    roi_cropped = rect_roi
+    
+    segment_data, roi_cropped = self.get_segment_data(roi_cropped)
+    
+    return segment_data, roi_cropped
+  
+  def get_segment_data(self, roi_cropped):    
+    # rotate 90 degrees
+    _w = SEGMENT_OUTPUT_WIDTH
+    _h = SEGMENT_OUTPUT_HEIGHT
+    padding = 20
+    padding_x = padding
+    padding_y = padding + 10
+    # Calculate the dimensions of each segment
+    segment_width = (_w - padding_x * 2) // INNER_COLS
+    segment_height = (_h - padding_y * 2)  // INNER_ROWS
+    
+    
+    segment_data = []
+    # Loop through the grid and extract each segment
+    for i in range(INNER_ROWS):
+      for j in range(INNER_COLS):
+        # Calculate the coordinates for the current segment
+        x_start = j * segment_width + padding_x
+        y_start = i * segment_height + padding_y
+        x_end = (j + 1) * segment_width + padding_x
+        y_end = (i + 1) * segment_height + padding_y
+        segment_corners = np.array([[x_start, y_start], [x_end, y_start], [x_end, y_end], [x_start, y_end]], dtype='float32')
+
+        # draw rect from segment_corners
+        for k in range(4):
+          start_point = segment_corners[k]
+          end_point = segment_corners[(k + 1) % 4]
+          # convert to int 
+          start_point = (int(start_point[0]), int(start_point[1]))
+          end_point = (int(end_point[0]), int(end_point[1]))
+          roi_cropped = cv2.line(roi_cropped, start_point, end_point, (0, 255, 0), 2)
+    
+        # Extract the segment
+        segment = roi_cropped[y_start:y_end, x_start:x_end]
+    
+        # gray segment
+        gray_segment = cv2.cvtColor(segment, cv2.COLOR_BGR2GRAY)
+        
+        # Perform template matching
+        matched_template, matched_filename = template_matching(gray_segment, self.templates)
+        matched_filename = matched_filename.split(".")[0]
+        roi_cropped = cv2.putText(roi_cropped, matched_filename, (x_start, y_start+20),  cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0) )
+        
+        # segment data
+        data = {
+            "matched_filename": matched_filename,
+            "row": i,
+            "col": j,
+        }
+        segment_data.append(data)
+        # cv2.imshow(f'Segment ({i}, {j})', segment)
+    return segment_data, roi_cropped
+  
+  def decode_segment_data(self, segment_data):
+    # send segment data to flask
+    return segment_data
+  
   def display_detections(self, new_detections, video_output):
     # Update the OpenCV display with new detections
     # This method should be called from the main thread
-    print("New Detections:", new_detections)
+    # print("New Detections:", new_detections)
     markers = new_detections[0]
     ids = new_detections[1]
     
@@ -165,6 +278,117 @@ class ArcheReader:
       return frame
     else:
       print("Cannot open camera")
+      
+  def processDetectedMarkers(self, image, corners, ids):
+
+        for i, corner in enumerate(ordered_corners):
+            start_point = ordered_corners[i]
+            end_point = ordered_corners[(i + 1) % 4]  # Connect the last point to the first point
+            # draw line between each marker
+            image = cv2.line(image, start_point, end_point, (0, 255, 0), 2)
+        
+        # Define the ROI using the corner points of the markers
+        roi_corners = np.array([marker for marker in ordered_corners], dtype=np.int32)
+        roi_corners = roi_corners.reshape((-1, 1, 2))
+        
+        # Create a mask for the ROI
+        mask = np.zeros_like(image)
+        cv2.fillPoly(mask, [roi_corners], (255, 255, 255))
+        
+        # Apply the mask to the original image
+        roi_image = cv2.bitwise_and(image, mask)
+        
+        # Get the bounding box of the ROI
+        x, y, w, h = cv2.boundingRect(roi_corners)
+        
+        # Crop the image using the bounding box
+        roi_cropped = roi_image[y:y+h, x:x+w]
+        
+        # size of output image segment
+        output_width = 700
+        output_height = 800
+
+        # Define the coordinates of the output rectangle
+        output_rect = np.array([[0, 0], [output_width - 1, 0], [output_width - 1, output_height - 1], [0, output_height - 1]], dtype=np.float32)
+
+        # Calculate the perspective transformation matrix
+        perspective_matrix = cv2.getPerspectiveTransform(roi_corners.astype(np.float32), output_rect)
+
+        # Apply the perspective transformation to the original image
+        rect_roi = cv2.warpPerspective(image, perspective_matrix, (output_width, output_height))
+
+        roi_cropped = rect_roi
+        
+        # rotate 90 degrees
+        _w = output_width
+        _h = output_height
+        padding = 20
+        padding_x = padding
+        padding_y = padding + 10
+        # Calculate the dimensions of each segment
+        segment_width = (_w - padding_x * 2) // INNER_COLS
+        segment_height = (_h - padding_y * 2)  // INNER_ROWS
+        
+        # Convert the cropped image to grayscale
+        # gray_cropped = cv2.cvtColor(roi_cropped, cv2.COLOR_BGR2GRAY)
+        
+        segment_data = []
+
+        # Loop through the grid and extract each segment
+        for i in range(INNER_ROWS):
+            for j in range(INNER_COLS):
+                # Calculate the coordinates for the current segment
+                x_start = j * segment_width + padding_x
+                y_start = i * segment_height + padding_y
+                x_end = (j + 1) * segment_width + padding_x
+                y_end = (i + 1) * segment_height + padding_y
+                segment_corners = np.array([[x_start, y_start], [x_end, y_start], [x_end, y_end], [x_start, y_end]], dtype='float32')
+
+                # draw rect from segment_corners
+                for k in range(4):
+                    start_point = segment_corners[k]
+                    end_point = segment_corners[(k + 1) % 4]
+                    # convert to int 
+                    start_point = (int(start_point[0]), int(start_point[1]))
+                    end_point = (int(end_point[0]), int(end_point[1]))
+                    roi_cropped = cv2.line(roi_cropped, start_point, end_point, (0, 255, 0), 2)
+            
+                # Extract the segment
+                segment = roi_cropped[y_start:y_end, x_start:x_end]
+            
+                # gray segment
+                gray_segment = cv2.cvtColor(segment, cv2.COLOR_BGR2GRAY)
+                
+                # Perform template matching
+                matched_template, matched_filename = template_matching(gray_segment, self.templates)
+                matched_filename = matched_filename.split(".")[0]
+                roi_cropped = cv2.putText(roi_cropped, matched_filename, (x_start, y_start+20),  cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0) )
+                
+                # segment data
+                data = {
+                    "matched_filename": matched_filename,
+                    "row": i,
+                    "col": j,
+                }
+                segment_data.append(data)
+                
+                # Display the matched template
+                # cv2.imshow(f'Matched Template ({i}, {j})', gray_segment)
+                
+                # Display the segment in a separate window
+                if self.save_frames == True:
+                    # random id for now
+                    id = np.random.randint(low=0, high=100000000000000)
+                    filename = f'frames/segment_{i}_{j}_{id}.jpg'
+                    cv2.imwrite(filename, segment)
+                # cv2.imshow(f'Segment ({i}, {j})', segment)
+                # draw lines
+        
+        #if segment_data != []:
+            # send segment data to flask
+            # self.decode_segments(segment_data)
+        # cv2.imshow('cropped', roi_cropped)
+        return segment_data
 
   def test_detection(self, raw_image):
     image = raw_image.copy()

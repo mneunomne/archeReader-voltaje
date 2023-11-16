@@ -59,27 +59,45 @@ class ImageProcessor:
         # self.archeReader.show_image(image)
         
         # self.archeReader.draw_detections(image, corners, ids)
-        
-        print("ids", ids)
-        
-        is_valid = self.validateMarkers(image, corners, ids, segmentIndex)
-        
-        detections = (corners, ids)
-        
-        self.archeReader.set_detections(detections)
+                
+        is_valid, detections  = self.validateMarkers(image, corners, ids, segmentIndex)
         
         if is_valid:
+            self.archeReader.set_detections(detections)
             # self.archeReader.validate_detections()
             return True
         else:
+            self.archeReader.set_detections(detections)
             return False
     
-    def validateMarkers(self, image, corners, ids, segmentIndex):
+    def validateMarkers(self, image, corners, ids, segmentIndex):   
+        # make new tuple
+        validated_markers = []
+        validated_ids = np.array([], int)
         if ids is None:
-            return False
+            return False, (corners, ids)
         if len(ids) < 4:
-            return False
-        return True
+            return False, (corners, ids)
+
+        top_left = segmentIndex + 1
+        top_right = segmentIndex + 2
+        bottom_left = top_left + COLS
+        bottom_right = top_right + COLS
+        
+        # find if ids contains top_left, top_right, bottom_left, bottom_right
+        corner_ids = [top_left, top_right, bottom_left, bottom_right]
+        
+        for index, id in enumerate(ids):
+            if id in corner_ids:
+                # remove element from corners
+                validated_markers.append(corners[index])
+                validated_ids = np.append(validated_ids, id)
+                corner_ids.remove(id)
+        print("len(corner_ids)", len(corner_ids))
+        if len(corner_ids) > 0:
+            return False, (corners, ids)
+                
+        return True, (validated_markers, validated_ids)
     
     def processDetectedMarkers(self, image, corners, ids):
         image = aruco.drawDetectedMarkers(image, corners, ids)
@@ -146,9 +164,6 @@ class ImageProcessor:
         segment_width = (_w - padding_x * 2) // INNER_COLS
         segment_height = (_h - padding_y * 2)  // INNER_ROWS
         
-        # Convert the cropped image to grayscale
-        # gray_cropped = cv2.cvtColor(roi_cropped, cv2.COLOR_BGR2GRAY)
-        
         segment_data = []
 
         # Loop through the grid and extract each segment
@@ -210,9 +225,6 @@ class ImageProcessor:
     def getDetectedMarkers(self):
         return self.lastDetectMarkers
     
-    
-    def validateSegment(self, segment):
-        return False
     
     def onDetectedMarker (self, corners, ids):
         for index, id in enumerate(ids):

@@ -78,7 +78,7 @@ def test(json):
     print('received test', json)
     return Response('done', mimetype='text/plain')
 
-@app.route('/on_segment/<string:segmentIndex>', methods=['GET', 'POST'])
+@app.route('/on_segment/<int:segmentIndex>', methods=['GET', 'POST'])
 def on_segment(segmentIndex):
     print('received segmentIndex', segmentIndex)
     global video_output

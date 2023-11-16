@@ -15,6 +15,9 @@ FLASK_SERVER_PORT = int(os.environ.get("FLASK_SERVER_PORT"))
 SEGMENT_WIDTH = 68
 SEGMENT_HEIGHT = 68
 
+SEGMENT_OUTPUT_WIDTH = 700
+SEGMENT_OUTPUT_HEIGHT = 800
+
 # ceramic data
 COLS = 5
 ROWS = 6
@@ -29,9 +32,9 @@ TEST_FILE = 'app/test_images/test5.jpg'
 aruco_defaults = {
   "adaptiveThreshWinSizeMin": 3,
   "adaptiveThreshWinSizeMax": 29,
-  "adaptiveThreshWinSizeStep": 18,
+  "adaptiveThreshWinSizeStep": 22,
   "adaptiveThreshConstant": 3,
-  "minMarkerPerimeterRate": 100,
+  "minMarkerPerimeterRate": 66,
   "maxMarkerPerimeterRate": 40,
   "polygonalApproxAccuracyRate": 50
 }
