@@ -96,6 +96,11 @@ def on_segment(segmentIndex):
     ready_to_read = True
     return Response('done', mimetype='text/plain')
 
+@app.route('/clear', methods=['GET', 'POST'])
+def on_clear():
+    imageProcessor.clear()
+    return Response('done', mimetype='text/plain')
+
 @app.route('/cropped_feed')
 def cropped_feed():
     #Video streaming route. Put this in the src attribute of an img tag

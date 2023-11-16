@@ -25,7 +25,7 @@ class ArcheReader:
     
     self.test_parameters = args.parameters
     
-    self.detections = []
+    self.detections = [[],[]]
     
     self.detections_queue = queue.Queue()  # Queue for passing detections between threads
     
@@ -111,15 +111,17 @@ class ArcheReader:
       else:
         # Check the queue for new detections
         try:
-            self.detections = self.detections_queue.get_nowait()
-            segment_data, roi_cropped = self.process_detections(self.detections, image)
-            final_data = self.decode_segment_data(segment_data)
-            print("segment_data", segment_data)
-            cv2.imshow('cropped', roi_cropped)
+            self.detections = self.detections_queue.get_nowait()  
+            if len(self.detections[0]) == 4 and len(self.detections[1]) == 4:
+              segment_data, roi_cropped = self.process_detections(self.detections, image)
+              data_message = self.decode_segment_data(segment_data)
+              self.sendSocketData(data_message)
+              print("segment_data", segment_data)
+              cv2.imshow('cropped', roi_cropped)
         except queue.Empty:
             pass
       
-      if len(self.detections) > 0:
+      if len(self.detections[0]) == 4 and len(self.detections[1]) == 4:
         video_output = self.display_detections(self.detections, video_output)
         
       # send video to flask
@@ -241,9 +243,11 @@ class ArcheReader:
     return segment_data, roi_cropped
   
   def decode_segment_data(self, segment_data):
-    # send segment data to flask
-    return segment_data
-  
+    s = ""
+    for d in segment_data:
+      s += d["matched_filename"] + " "
+    return s
+    
   def display_detections(self, new_detections, video_output):
     # Update the OpenCV display with new detections
     # This method should be called from the main thread
@@ -257,10 +261,14 @@ class ArcheReader:
     
   def set_detections(self, detections):
     self.detections = detections
-
     # Put the new detections in the queue for the main thread to pick up
     self.detections_queue.put(detections)
     
+  def clear(self):
+    # Clear the detections
+    self.detections = []
+    self.detections_queue.put(([], []))  
+  
   def get_image(self):
     # if test enabled, use static image
     if self.test:
@@ -279,12 +287,11 @@ class ArcheReader:
       print("Cannot open camera")
       
   def processDetectedMarkers(self, image, corners, ids):
-
         for i, corner in enumerate(ordered_corners):
-            start_point = ordered_corners[i]
-            end_point = ordered_corners[(i + 1) % 4]  # Connect the last point to the first point
-            # draw line between each marker
-            image = cv2.line(image, start_point, end_point, (0, 255, 0), 2)
+          start_point = ordered_corners[i]
+          end_point = ordered_corners[(i + 1) % 4]  # Connect the last point to the first point
+          # draw line between each marker
+          image = cv2.line(image, start_point, end_point, (0, 255, 0), 2)
         
         # Define the ROI using the corner points of the markers
         roi_corners = np.array([marker for marker in ordered_corners], dtype=np.int32)
@@ -389,6 +396,11 @@ class ArcheReader:
         # cv2.imshow('cropped', roi_cropped)
         return segment_data
 
+  def sendSocketData(self, data_message):
+    print("sendSocketData", data_message)
+    socketio.emit('detection_data', {'data': data_message})
+    # socketio.send('detection_data', data)
+  
   def test_detection(self, raw_image):
     image = raw_image.copy()
     # Convert the image to grayscale (if necessary)

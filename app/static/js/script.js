@@ -4,6 +4,9 @@ var map;
 
 var default_latlng = [4.6097, -74.0817]; // Bogotá
 
+// init socket io
+var socket = io.connect('http://' + document.domain + ':' + location.port);
+
 const initPlanetarium = function (w, h) {
   let d = new Date("-004235-11-14"); 
   planetarium1 = S.virtualsky({
@@ -64,13 +67,37 @@ S(document).ready(function() {
   // Update the position of the map and the planetarium
   document.addEventListener('keyup', function(event) {
     if (event.key == 't') {
-      // test
-      let lat = default_latlng[0] + ((2 * Math.random() - 1) * 1);
-      let lon = default_latlng[1] + ((2 * Math.random() - 1) * 1);
-      updateMapPosition(lat, lon);
-      let now = new Date().getTime()
-      let nowDate = new Date(now + (Math.random() * 100000000000));
-      updatePlanetariumPosition(lat, lon, nowDate);
+      setRandomPosition()
     } 
+  });
+
+  const setRandomPosition = function () {
+    // test
+    let lat = default_latlng[0] + ((2 * Math.random() - 1) * 1);
+    let lon = default_latlng[1] + ((2 * Math.random() - 1) * 1);
+    updateMapPosition(lat, lon);
+    let now = new Date().getTime()
+    let nowDate = new Date(now + (Math.random() * 100000000000));
+    updatePlanetariumPosition(lat, lon, nowDate);
+  }
+
+  // add socket events
+  socket.on('connect', function() {
+    console.log('connected');
+  });
+
+  socket.on('disconnect', function() {
+    console.log('disconnected');
+  });
+
+  // on message 'detection_data'
+  socket.on('detection_data', function(msg) {
+    console.log('detection_data', msg);
+    setRandomPosition()
+  });
+
+  // clear message
+  socket.on('clear', function(msg) {
+    console.log('clear', msg);
   });
 });
