@@ -10,7 +10,7 @@ from globals import *
         
 class ImageProcessor:
     
-    lastDetectMarkers = []
+    storedDetections = ([], np.array([], int))
     
     def __init__(self):
         # values for aruco markers
@@ -21,14 +21,18 @@ class ImageProcessor:
         self.minMarkerPerimeterRate = aruco_defaults["minMarkerPerimeterRate"] # / 1000
         self.maxMarkerPerimeterRate = aruco_defaults["maxMarkerPerimeterRate"] # / 10
         self.polygonalApproxAccuracyRate = aruco_defaults["polygonalApproxAccuracyRate"] # / 1000
+        self.storedDetections = ([], [])
     
     def init(self, args, archeReader):
         self.test = args.test 
         self.debug = args.debug
         self.save_frames = args.save_frames
         self.archeReader = archeReader
+    
+    def clear_stored_markers(self):
+        self.storedDetections = ([], [])
 
-    def process_image(self, raw_image, segmentIndex):        
+    def process_image(self, raw_image, segmentIndex):
         image = raw_image.copy()
         
         # Convert the image to grayscale (if necessary)
@@ -52,34 +56,47 @@ class ImageProcessor:
         # Detect markers
         corners, ids, rejectedImgPoints = detector.detectMarkers(gray)
                 
-        is_valid, detections  = self.validateMarkers(image, corners, ids, segmentIndex)
+        is_valid, detections = self.validateMarkers(image, corners, ids, segmentIndex)
+
+        # store detections that are valid
+        for index, id in enumerate(detections[1]):
+            # print("id" ,id)
+            if id not in self.storedDetections[1]:
+                self.storedDetections[0].append(detections[0][index])
+                self.storedDetections[1].append(id)
+            else:
+                stored_index = self.storedDetections[1].index(id)
+                self.storedDetections[0][stored_index] = detections[0][index]
+
+        # Convert ids to a numpy array
+        ids_np = np.array(self.storedDetections[1], int)
+
+        # Check if all expected detections are present in storedDetections
+        if set(ids_np) == set([segmentIndex, segmentIndex + 1, segmentIndex + COLS, segmentIndex + COLS + 1]):
+            is_valid = True
         
-        if is_valid:
-            self.archeReader.set_detections(detections)
-            return True
-        else:
-            self.archeReader.set_detections(detections)
-            return False
-    
-    def validateMarkers(self, image, corners, ids, segmentIndex):   
+        # if stored detection doesnt have specific detection id, add it
+        
+        self.archeReader.set_detections((self.storedDetections[0], ids_np))
+        return is_valid
+            
+    def validateMarkers(self, image, corners, ids, segmentIndex):
         # make new tuple
         validated_markers = []
         validated_ids = np.array([], int)
         if ids is None:
-            return False, (corners, ids)
-        if len(ids) < 4:
-            return False, (corners, ids)
+            return False, ([], [])
 
         top_left = segmentIndex
         top_right = segmentIndex + 1
         bottom_left = top_left + COLS
         bottom_right = top_right + COLS
-        
+
         # find if ids contains top_left, top_right, bottom_left, bottom_right
         corner_ids = [top_left, top_right, bottom_left, bottom_right]
-        
+
         print("corner_ids", corner_ids, ids)
-        
+
         for index, id in enumerate(ids):
             if id in corner_ids:
                 # remove element from corners
@@ -87,10 +104,11 @@ class ImageProcessor:
                 validated_ids = np.append(validated_ids, id)
                 corner_ids.remove(id)
         
-        print("len(corner_ids)", len(corner_ids))
+        validated_ids = np.array(validated_ids, int)  # Convert to numpy array
+
         if len(corner_ids) > 0:
-            return False, (corners, ids)
-                
+            return False, (validated_markers, validated_ids)
+
         return True, (validated_markers, validated_ids)
     
     def getDetectedMarkers(self):

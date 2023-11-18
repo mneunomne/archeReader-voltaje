@@ -335,7 +335,7 @@ class ArcheReader:
         _h = output_height
         padding = 20
         padding_x = padding
-        padding_y = padding + 10
+        padding_y = padding
         # Calculate the dimensions of each segment
         segment_width = (_w - padding_x * 2) // INNER_COLS
         segment_height = (_h - padding_y * 2)  // INNER_ROWS

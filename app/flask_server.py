@@ -86,20 +86,25 @@ def on_segment(segmentIndex):
         print('cropped_output is None')
         return Response('fail', mimetype='text/plain')
     else:
+        imageProcessor.clear_stored_markers()
         is_valid = False
         attempts = 0
         while not is_valid and attempts < 1000:
             is_valid = imageProcessor.process_image(video_output, segmentIndex)
-            print('is_valid', is_valid)
+            # print('is_valid', is_valid)
             if is_valid: 
                 attempts = 1000
-    ready_to_read = True
-    return Response('done', mimetype='text/plain')
+        if is_valid:
+            print('is_valid', is_valid)
+            return Response('ok', mimetype='text/plain')
+        else:
+            return Response('fail', mimetype='text/plain')
+            print('not valid', is_valid)
 
 @app.route('/clear', methods=['GET', 'POST'])
 def on_clear():
     imageProcessor.clear()
-    return Response('done', mimetype='text/plain')
+    return Response('ok', mimetype='text/plain')
 
 @app.route('/cropped_feed')
 def cropped_feed():

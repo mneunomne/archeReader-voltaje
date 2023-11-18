@@ -6,10 +6,11 @@ var timestamp
 
 var default_latlng = [4.6097, -74.0817]; // Bogotá
 
-var startDate = new Date("October 25, 2023 12:00:00");
+var startDate = new Date("1785/07/12 00:21:00");
 
 // init socket io
 var socket = io.connect('http://' + document.domain + ':' + location.port);
+
 
 const initPlanetarium = function (w, h) {
   let d = new Date("October 25, 1985 12:00:00");
@@ -25,22 +26,23 @@ const initPlanetarium = function (w, h) {
     transparent: true,
     // showorbits: true,
     az: 270,
-    gridlines_az: true,
-    gridlines_eq: true,
-    gridlines_gal: false,
-    meridian: true,
+    // gridlines_az: true,
+    // gridlines_eq: true,
+    // gridlines_gal: false,
+    // meridian: true,
     ground: true,
     magnitude: 20,
     meteorshowers: true,
     showstarlabels: true,
     scalestars: 2,
-    width: w,
-    height: h,
-    'constellations': true,
-    constellationlabels: true,
+    width: w ,
+    height: h + 15,
+    constellations: true,
+    constellationlabels: false,
     lang: 'es',
     fontsize: '12px',
-    clock: d,
+    clock: startDate,
+    objects: "M1;M42;Horsehead Nebula"
   });
 }
 

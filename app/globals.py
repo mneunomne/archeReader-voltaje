@@ -31,10 +31,10 @@ TEST_FILE = 'app/test_images/test8.jpg'
 # aruco marker settings
 aruco_defaults = {
   "adaptiveThreshWinSizeMin": 3,
-  "adaptiveThreshWinSizeMax": 29,
-  "adaptiveThreshWinSizeStep": 7,
+  "adaptiveThreshWinSizeMax": 25,
+  "adaptiveThreshWinSizeStep": 2,
   "adaptiveThreshConstant": 3,
-  "minMarkerPerimeterRate": 66,
+  "minMarkerPerimeterRate": 100,
   "maxMarkerPerimeterRate": 40,
   "polygonalApproxAccuracyRate": 50
 }
