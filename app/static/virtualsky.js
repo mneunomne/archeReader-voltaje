@@ -283,6 +283,7 @@ function VirtualSky(input){
 	this.showdate = true;				// Display the current date
 	this.showposition = true;			// Display the longitude/latitude
 	this.scalestars = 1;				// A scale factor by which to increase the star sizes
+	this.scaleplanets = 1;				// A scale factor by which to increase the planet sizes
 	this.ground = false;
 	this.grid = { az: false, eq: false, gal: false, step: 30 };	// Display grids
 	this.gal = { 'processed':false, 'lineWidth':0.75 };
@@ -1020,6 +1021,7 @@ VirtualSky.prototype.init = function(d){
 		meteorshowers: b,
 		showstars: b,
 		scalestars: n,
+		scaleplanets: n,
 		showstarlabels: b,
 		starnames: o,
 		showplanets: b,
@@ -1588,8 +1590,8 @@ VirtualSky.prototype.createSky = function(){
 	this.registerKey('g',function(){ this.toggleGround(); },'ground');
 	this.registerKey('h',function(){ this.cycleProjection(); },'projection');
 	this.registerKey('i',function(){ this.toggleNegative(); },'neg');
-	this.registerKey(',',function(){ this.toggleEcliptic(); },'ec');
-	this.registerKey(';',function(){ this.toggleMeridian(); },'meridian');
+	//this.registerKey(',',function(){ this.toggleEcliptic(); },'ec');
+	//this.registerKey(';',function(){ this.toggleMeridian(); },'meridian');
 	this.registerKey('e',function(){ this.toggleGridlinesEquatorial(); },'eq');
 	this.registerKey('z',function(){ this.toggleGridlinesAzimuthal(); },'az');
 	this.registerKey('m',function(){ this.toggleGridlinesGalactic(); },'gal');
@@ -1609,6 +1611,8 @@ VirtualSky.prototype.createSky = function(){
 	this.registerKey('j',function(){ if(!this.islive) this.spinIt("down"); },'slow');
 	this.registerKey('k',function(){ this.spinIt(0); },'stop');
 	this.registerKey('l',function(){ if(!this.islive) this.spinIt("up"); },'fast');
+	this.registerKey(',',function(){ this.setClock(-3600).calendarUpdate(); },'subtracthour');
+	this.registerKey('.',function(){ this.setClock(3600).calendarUpdate(); },'addhour');
 	this.registerKey('-',function(){ this.setClock(-86400).calendarUpdate(); },'subtractday');
 	this.registerKey('=',function(){ this.setClock(86400).calendarUpdate(); },'addday');
 	this.registerKey('[',function(){ this.setClock(-86400*7).calendarUpdate(); },'subtractweek');
@@ -2718,6 +2722,7 @@ VirtualSky.prototype.drawPlanets = function(){
 				if(this.hasAtmos()) d *= Math.exp(-((90-pos.el)*this.d2r)*0.6);
 			}
 			if(d < 1.5) d = 1.5;
+			d *= this.scaleplanets;
 			this.drawPlanet(pos.x,pos.y,d,colour,this.planets[p][0]);
 		}
 
@@ -2755,7 +2760,7 @@ VirtualSky.prototype.drawPlanets = function(){
 		if(this.sun) {
 			pos = this.ecliptic2xy(this.sun.lon*this.d2r,this.sun.lat*this.d2r,this.times.LST);
 			if(this.isVisible(pos.el) && !this.isPointBad(pos)){
-				this.drawPlanet(pos.x,pos.y,5,this.col.sun,"sun");
+				this.drawPlanet(pos.x,pos.y,5*this.scaleplanets,this.col.sun,"sun");
 				this.lookup.sun = [this.ecliptic2radec(this.sun.lon*this.d2r,this.sun.lat*this.d2r,this.times.LST)];
 				this.lookup.sun[0].label = this.lang.sun;
 			}
@@ -2764,7 +2769,7 @@ VirtualSky.prototype.drawPlanets = function(){
 		if(this.moon) {
 			pos = this.ecliptic2xy(this.moon.lon*this.d2r,this.moon.lat*this.d2r,this.times.LST);
 			if(this.isVisible(pos.el) && !this.isPointBad(pos)){
-				this.drawPlanet(pos.x,pos.y,5,this.col.moon,"moon");
+				this.drawPlanet(pos.x,pos.y,5*this.scaleplanets,this.col.moon,"moon");
 				this.lookup.moon = [this.ecliptic2radec(this.moon.lon*this.d2r,this.moon.lat*this.d2r,this.times.LST)];
 				this.lookup.moon[0].label = this.lang.moon;
 			}
@@ -3396,7 +3401,7 @@ VirtualSky.prototype.setClock = function(seconds){
 			if(seconds==="now") this.updateClock(new Date());
 			else this.updateClock(new Date(seconds));
 		}else{
-			this.updateClock((typeof this.input.clock==="string") ? this.input.clock.replace(/%20/g,' ') : this.input.clock);
+			this.updateClock((typeof this.input.clock==="string") ? this.input.clock.replace(/%20/g,'; ') : this.input.clock);
 			if(typeof this.clock==="string") this.updateClock(new Date(this.clock));
 		}
 	}else if(typeof seconds==="object"){
@@ -3454,7 +3459,7 @@ VirtualSky.prototype.addPointer = function(input){
 		if(typeof p.html !== "string"){
 			style = p.style || "width:128px;height:128px;";
 			url = p.url || "http://server1.wikisky.org/v2?ra="+(p.ra/15)+"&de="+(p.dec)+"&zoom=6&img_source=DSS2";
-			img = p.img || 'http://server7.sky-map.org/imgcut?survey=DSS2&w=128&h=128&ra='+(p.ra/15)+'&de='+p.dec+'&angle=0.25&output=PNG';
+			img = p.img || 'http://server7.sky-map.org/imgcut?survey=DSS2&w=128&h=128&ra='+(p.ra/15)+'&de='+p.dec+'&angle=0.25&output=PNG';;
 			label = p.credit || "View in Wikisky";
 			credit = p.credit || "DSS2/Wikisky";
 			p.html =  p.html ||

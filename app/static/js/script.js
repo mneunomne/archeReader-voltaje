@@ -6,11 +6,24 @@ var timestamp
 
 var default_latlng = [4.6097, -74.0817]; // Bogotá
 
-var startDate = new Date("1785/07/12 00:21:00");
+var startDate = new Date("1994/12/27 00:21:00");
+
+var currentTime = startDate.getTime();
+var currentAz = 45;
+
+const messageContainer = document.getElementById('characters')
+const skyContainer = document.getElementById('skymap')
+
+const data = dates.map((date) => {
+  var lat = date.lat.substring(0, 16).padEnd(16, 'X')
+  var lon = date.lon.substring(0, 16).padEnd(16, 'X')
+  var timestamp = (date.timestamp+'').substring(0, 18).padStart(18, 'X')
+  var az = date.az.substring(0, 3).padStart(3, 'X')
+  return `${lat}|${lon}|${timestamp}|${az}`
+})
 
 // init socket io
 var socket = io.connect('http://' + document.domain + ':' + location.port);
-
 
 const initPlanetarium = function (w, h) {
   let d = new Date("October 25, 1985 12:00:00");
@@ -25,7 +38,7 @@ const initPlanetarium = function (w, h) {
     showplanets: true,
     transparent: true,
     // showorbits: true,
-    az: 270,
+    az: currentAz,
     // gridlines_az: true,
     // gridlines_eq: true,
     // gridlines_gal: false,
@@ -34,15 +47,18 @@ const initPlanetarium = function (w, h) {
     magnitude: 20,
     meteorshowers: true,
     showstarlabels: true,
-    scalestars: 2,
+    scalestars: 3,
+    scaleplanets: 3,
     width: w ,
-    height: h + 15,
+    height: h,// + 15,
+    keyboard: true, 
+    mouse: true,
     constellations: true,
-    constellationlabels: false,
+    constellationlabels: true,
     lang: 'es',
-    fontsize: '12px',
+    fontsize: '14px',
     clock: startDate,
-    objects: "M1;M42;Horsehead Nebula"
+    credit: false,
   });
 }
 
@@ -57,50 +73,39 @@ const initMap = function () {
 
 }
 
-const updateMapPosition = function (lat, lon, zoom = 13) {
-  map.setView([lat, lon], zoom);
-}
+const updatePlanetariumTime = function (timestamp, az_step) {
+  planetarium1.setClock(timestamp).calendarUpdate()
+  planetarium1.changeAzimuth(az_step)
+  //planetarium1.drawImmediate();
+  // planetarium1.drawPlanets();
+  // planetarium1.draw();
 
-const updatePlanetariumPosition = function (lat, lon, timestamp) {
-  planetarium1.setClock(timestamp);
-  planetarium1.setLatitude(lat);
-  planetarium1.setLongitude(lon);
-
-  //planetarium1.setRA(lat);
-  //planetarium1.setDec(lon);
-  planetarium1.drawImmediate();
-  // pan to jupiter
-  //planetarium1.panTo(83.8220833, -5.3911111); 
-}
-
-const updatePlanetarium = function (lat, lon, timestamp, az) {
-  planetarium1.setClock(new Date(timestamp));
-  planetarium1.setLatitude(lat);
-  planetarium1.setLongitude(lon);
-  //planetarium1.toggleAzimuthMove(az);
-  //planetarium1.setRA(lat);
-  //planetarium1.setDec(lon);
-  planetarium1.drawImmediate();
-  // pan to jupiter
-  //planetarium1.panTo(83.8220833, -5.3911111); 
-}
-
-const updatePlanetariumTime = function (timestamp) {
-  planetarium1.setClock(timestamp);
-  planetarium1.drawImmediate();
 }
 
 S(document).ready(function () {
   let w = window.innerWidth;
   let h = window.innerHeight;
   initPlanetarium(w, h);
-  initMap()
+  // initMap()
 
   // Update the position of the map and the planetarium
   document.addEventListener('keyup', function (event) {
     if (event.key == 't') {
       //setRandomPosition()
+      // toggleAzimuthMove
     }
+    // if key is number 0-9, send get request to server /on_segment/<segment_number>
+    if (event.key >= '0' && event.key <= '9') {
+      // send get request to server
+      let segment_number = parseInt(event.key)
+
+      onSegmentData({data: data[segment_number]})
+      /*
+      $.get("/on_segment/" + segment_number, function (data, status) {
+        console.log("data", data)
+      });
+      */
+    } 
   });
 
   const setRandomPosition = function () {
@@ -112,29 +117,44 @@ S(document).ready(function () {
     let nowDate = new Date(now + (Math.random() * 10000000000));
     updatePlanetariumPosition(lat, lon, nowDate);
     timestamp = nowDate.getTime()
-
-    const duration = 5000; // 1 second duration for the transition
-    const startTime = Date.now();
-
-    const updatePosition = () => {
-      const elapsed = Date.now() - startTime;
-      console.log("elapsed", elapsed)
-      const progress = Math.min(elapsed / duration, 1);
-
-      const easedProgress = cubicBezierEasing(progress);
-
-      const newTimestamp = now + progress * (nowDate.getTime() - now);
-      updatePlanetariumTime(new Date(newTimestamp));
-      updateMapPosition(lat, lon);
-
-      if (progress < 1) {
-        requestAnimationFrame(updatePosition);
-      }
-    };
-
     // Start the smooth transition
     // updatePosition();
   }
+
+  const transitionPlanetarium = (data,  duration = 500) => {
+    var startTime = Date.now();
+    skyContainer.className = 'transition'
+    var az_diff = (data.az - currentAz)
+    //var total = 0
+    var lastEllapsed = Date.now() - startTime
+    // updateMapPosition(data.lat, data.lon);
+    function updateTransition () {
+      const elapsed = Date.now() - startTime;
+      var lastProg = (elapsed - lastEllapsed) / duration
+      var az = lastProg * az_diff
+      lastEllapsed = elapsed
+      
+      //total += az
+      const progress = Math.min(elapsed / duration, 1);
+  
+      const newTimestamp = startTime + progress * (data.timestamp - currentTime);
+      
+      updatePlanetariumTime(new Date(newTimestamp), az);
+  
+      if (progress < 1) {
+        requestAnimationFrame(updateTransition);
+      } else {
+        skyContainer.className = ''
+        currentTime = data.timestamp
+        currentAz = data.az
+        setTimeout(() => {
+          updatePlanetariumTime(new Date(data.timestamp), 0);
+          planetarium1.setClock(1)
+        }, 1)
+      }
+    }
+    updateTransition();
+  };
 
   // Cubic Bezier Easing Function
   const cubicBezierEasing = (t) => {
@@ -151,6 +171,7 @@ S(document).ready(function () {
   // decode function
   var decode = function (string) {
     var data = string.split("|").map((item) => {
+      console.log("item", item)
       let result = ''
       if (item[0] == '-') {
         result = '-' + item.substring(1, item.length).replace('-', '.')
@@ -179,12 +200,51 @@ S(document).ready(function () {
   // on message 'detection_data'
   socket.on('detection_data', function (msg) {
     console.log('detection_data', msg);
-    var data = decode(msg.data)
-    console.log("decode data", data)
-    updatePlanetarium(data.lat, data.lon, data.timestamp, data.az)
-    // setRandomPosition()
-
+    onSegmentData(msg)
   });
+
+  const onSegmentData = function (msg) {
+    console.log('detection_data', msg);
+    var string = msg.data.replace(/X/g, '')
+    console.log('string', string);
+    var data = decode(string)
+    console.log("decode data", data)
+    // updatePlanetarium(data.lat, data.lon, data.timestamp, data.az)
+
+    transitionPlanetarium(data, 5000)
+
+    hideMessage()
+    setTimeout(() => {
+      displayMessage(string)
+    }, 5000)
+  }
+
+  const displayMessage = function (msg) {
+    msg.split('').map((char, index) => {
+      if (char == '0') char = '20'
+      if (char == '.') char = '-'
+      const img = document.createElement('img')
+      img.src='templates/' + char + '.svg'
+      img.style = `transition-delay: ${index * 0.025}s;`
+      messageContainer.appendChild(img)
+      if (char == '|') {
+        const br = document.createElement('br')
+        messageContainer.appendChild(br) 
+      }
+    })
+    setTimeout(() => {
+      // hideMessage()
+      messageContainer.className = 'show'
+    }, 100)
+  }
+
+  const hideMessage = function () {
+    messageContainer.className = ''
+    setTimeout(() => {
+      messageContainer.innerHTML = ''
+    }, 1500)
+    /*messageContainer.innerHTML = ''*/
+  }
 
   // clear message
   socket.on('clear', function (msg) {

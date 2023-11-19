@@ -117,6 +117,7 @@ class ArcheReader:
               data_message = self.decode_segment_data(segment_data)
               self.sendSocketData(data_message)
               print("segment_data", segment_data)
+              sendCroppedOutput(roi_cropped)
               cv2.imshow('cropped', roi_cropped)
         except queue.Empty:
             pass

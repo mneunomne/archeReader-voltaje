@@ -1,7 +1,9 @@
 from flask import Flask, render_template, Response
 from flask_socketio import SocketIO, send, emit
 from image_processing import ImageProcessor
+import numpy as np
 import cv2
+from globals import SEGMENT_OUTPUT_WIDTH, SEGMENT_OUTPUT_HEIGHT
 
 app = Flask(__name__, static_url_path='', static_folder='static', template_folder='static')
 
@@ -10,6 +12,10 @@ socketio = SocketIO(app)
 
 video_output = None
 cropped_output = None
+
+# make cropped image blank with SEGMENT_OUTPUT_WIDTH and SEGMENT_OUTPUT_HEIGHT with 3 channels using opencv / np
+# cropped_output = np.zeros((SEGMENT_OUTPUT_HEIGHT, SEGMENT_OUTPUT_WIDTH, 3), np.uint8)
+# video_output = np.zeros((SEGMENT_OUTPUT_HEIGHT, SEGMENT_OUTPUT_WIDTH, 3), np.uint8)
 
 current_segment_index = 0
 
@@ -25,29 +31,27 @@ def sendCroppedOutput(frame):
 
 def gen_frames():  # generate frame by frame from camera
     global video_output
-    while True:
-        # Capture frame-by-frame
-        if video_output is None:
-            break
-        else:
-            frame = video_output.copy()
-            ret, buffer = cv2.imencode('.jpg', frame)
-            frame = buffer.tobytes()
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')  # concat frame one by one and show result
+    # Capture frame-by-frame
+    if video_output is None:
+        return
+    else:
+        frame = video_output.copy()
+        ret, buffer = cv2.imencode('.jpg', frame)
+        frame = buffer.tobytes()
+        yield (b'--frame\r\n'
+                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')  # concat frame one by one and show result
 
 def gen_cropped():  # generate frame by frame from camera
     global cropped_output
-    while True:
-        # Capture frame-by-frame
-        if cropped_output is None:
-            break
-        else:
-            frame = cropped_output.copy()
-            ret, buffer = cv2.imencode('.jpg', frame)
-            frame = buffer.tobytes()
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')  # concat frame one by one and show result
+    # Capture frame-by-frame
+    if cropped_output is None:
+        return
+    else:
+        frame = cropped_output.copy()
+        ret, buffer = cv2.imencode('.jpg', frame)
+        frame = buffer.tobytes()
+        yield (b'--frame\r\n'
+                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')  # concat frame one by one and show result
 
 def getState():
     global ready_to_read
@@ -57,6 +61,11 @@ def getState():
 def video_feed():
     #Video streaming route. Put this in the src attribute of an img tag
     return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/cropped_image')
+def cropped_image():
+    #Video streaming route. Put this in the src attribute of an img tag
+    return Response(gen_cropped(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/movement_end/<int:direction>')
 def on_movement_end(direction):
@@ -115,6 +124,11 @@ def cropped_feed():
 def index():
     """Video streaming home page."""
     return render_template('index.html')
+
+@app.route('/dates')
+def dates():
+    """Video streaming home page."""
+    return render_template('dates.html')
 
 @socketio.on('connect')
 def test_connect():
