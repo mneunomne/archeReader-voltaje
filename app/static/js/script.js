@@ -58,7 +58,7 @@ const initPlanetarium = function (w, h) {
     lang: 'es',
     fontsize: '14px',
     clock: startDate,
-    credit: false,
+    credit: false,22
   });
 }
 
