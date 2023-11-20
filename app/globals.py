@@ -32,9 +32,15 @@ TEST_FILE = 'app/test_images/test8.jpg'
 aruco_defaults = {
   "adaptiveThreshWinSizeMin": 3,
   "adaptiveThreshWinSizeMax": 25,
-  "adaptiveThreshWinSizeStep": 2,
+  "adaptiveThreshWinSizeStep": 3,
   "adaptiveThreshConstant": 3,
-  "minMarkerPerimeterRate": 100,
-  "maxMarkerPerimeterRate": 40,
-  "polygonalApproxAccuracyRate": 50
+  "minMarkerPerimeterRate": 150,
+  "maxMarkerPerimeterRate": 200,
+  "polygonalApproxAccuracyRate": 50,
+  "cornerRefinementWinSize": 5,
+  "cornerRefinementMaxIterations": 30,
+  "minDistanceToBorder": 1,
+  "minOtsuStdDev": 5,
+  "perspectiveRemovePixelPerCell": 8,
+  "adaptiveThreshWinSize": 23,
 }

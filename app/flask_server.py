@@ -1,14 +1,14 @@
 from flask import Flask, render_template, Response
-from flask_socketio import SocketIO, send, emit
+# from flask_socketio import SocketIO, send, emit
 from image_processing import ImageProcessor
 import numpy as np
 import cv2
-from globals import SEGMENT_OUTPUT_WIDTH, SEGMENT_OUTPUT_HEIGHT
+from globals import SEGMENT_OUTPUT_WIDTH, SEGMENT_OUTPUT_HEIGHT, FLASK_SERVER_IP, FLASK_SERVER_PORT
 
 app = Flask(__name__, static_url_path='', static_folder='static', template_folder='static')
 
 app.config['SECRET_KEY'] = 'secret!'
-socketio = SocketIO(app)
+# socketio = SocketIO(app)
 
 video_output = None
 cropped_output = None
@@ -99,16 +99,16 @@ def on_segment(segmentIndex):
         is_valid = False
         attempts = 0
         while not is_valid and attempts < 1000:
-            is_valid = imageProcessor.process_image(video_output, segmentIndex)
+            is_valid, msg = imageProcessor.process_image(video_output, segmentIndex)
             # print('is_valid', is_valid)
             if is_valid: 
                 attempts = 1000
         if is_valid:
             print('is_valid', is_valid)
-            return Response('ok', mimetype='text/plain')
+            return Response(msg, mimetype='text/plain')
         else:
-            return Response('fail', mimetype='text/plain')
             print('not valid', is_valid)
+            return Response('fail', mimetype='text/plain')
 
 @app.route('/clear', methods=['GET', 'POST'])
 def on_clear():
@@ -129,19 +129,3 @@ def index():
 def dates():
     """Video streaming home page."""
     return render_template('dates.html')
-
-@socketio.on('connect')
-def test_connect():
-    print('Client connected')
-
-@socketio.on('disconnect')
-def test_disconnect():
-    print('Client disconnected')
-
-@socketio.on('detection_data')
-def sendDetectionData(data):
-    emit('detection_data', data, broadcast=True)
-    
-@socketio.on('message')
-def handle_message(message):
-    print('received message: ' + message)

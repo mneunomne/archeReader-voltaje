@@ -77,8 +77,8 @@ class ImageProcessor:
         
         # if stored detection doesnt have specific detection id, add it
         
-        self.archeReader.set_detections((self.storedDetections[0], ids_np))
-        return is_valid
+        message = self.archeReader.set_detections((self.storedDetections[0], ids_np), raw_image, is_valid)
+        return is_valid, message
             
     def validateMarkers(self, image, corners, ids, segmentIndex):
         # make new tuple

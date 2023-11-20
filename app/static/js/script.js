@@ -14,6 +14,10 @@ var currentAz = 45;
 const messageContainer = document.getElementById('characters')
 const skyContainer = document.getElementById('skymap')
 
+const socket = new WebSocket(
+  "ws://0.0.0.0:8025/arche-scriptures"
+);
+
 const data = dates.map((date) => {
   var lat = date.lat.substring(0, 16).padEnd(16, 'X')
   var lon = date.lon.substring(0, 16).padEnd(16, 'X')
@@ -23,7 +27,7 @@ const data = dates.map((date) => {
 })
 
 // init socket io
-var socket = io.connect('http://' + document.domain + ':' + location.port);
+// var socket = io.connect('http://' + document.domain + ':' + location.port);
 
 const initPlanetarium = function (w, h) {
   let d = new Date("October 25, 1985 12:00:00");
@@ -58,7 +62,7 @@ const initPlanetarium = function (w, h) {
     lang: 'es',
     fontsize: '14px',
     clock: startDate,
-    credit: false,22
+    credit: false,
   });
 }
 
@@ -88,6 +92,14 @@ S(document).ready(function () {
   initPlanetarium(w, h);
   // initMap()
 
+  socket.onmessage = (event) => {
+    console.log("onmessage", event.data);
+    if (event.data.includes("detection-")) {
+      var msg = event.data.split("detection-")[1]
+      onSegmentData({data: msg})
+    }
+  };
+
   // Update the position of the map and the planetarium
   document.addEventListener('keyup', function (event) {
     if (event.key == 't') {
@@ -100,11 +112,10 @@ S(document).ready(function () {
       let segment_number = parseInt(event.key)
 
       onSegmentData({data: data[segment_number]})
-      /*
+      
       $.get("/on_segment/" + segment_number, function (data, status) {
         console.log("data", data)
       });
-      */
     } 
   });
 
@@ -187,7 +198,7 @@ S(document).ready(function () {
       az: data[3],
     }
   }
-
+/*
   // add socket events
   socket.on('connect', function () {
     console.log('connected');
@@ -202,6 +213,7 @@ S(document).ready(function () {
     console.log('detection_data', msg);
     onSegmentData(msg)
   });
+  */
 
   const onSegmentData = function (msg) {
     console.log('detection_data', msg);
@@ -245,9 +257,10 @@ S(document).ready(function () {
     }, 1500)
     /*messageContainer.innerHTML = ''*/
   }
-
+  /*
   // clear message
   socket.on('clear', function (msg) {
     console.log('clear', msg);
   });
+  */
 });
