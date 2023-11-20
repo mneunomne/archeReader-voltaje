@@ -224,13 +224,15 @@ class ArcheReader:
     # rotate 90 degrees
     _w = SEGMENT_OUTPUT_WIDTH
     _h = SEGMENT_OUTPUT_HEIGHT
-    padding = 22
+    padding = 20
     padding_x = padding + 22
-    padding_y = padding + 8
+    padding_y = padding + 10
     # Calculate the dimensions of each segment
     segment_width = (_w - padding_x * 2) // INNER_COLS
-    segment_height = (_h - padding_y * 2)  // INNER_ROWS
+    segment_height = ((_h - padding_y * 2)  // INNER_ROWS) - 2
     
+    kernel = np.array([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
+    roi_cropped = cv2.filter2D(roi_cropped, -1, kernel)
     
     segment_data = []
     # Loop through the grid and extract each segment
@@ -238,9 +240,9 @@ class ArcheReader:
       for j in range(INNER_COLS):
         # Calculate the coordinates for the current segment
         x_start = j * segment_width + padding_x
-        y_start = i * segment_height + padding_y + 6
+        y_start = i * segment_height + padding_y + 0
         x_end = (j + 1) * segment_width + padding_x
-        y_end = (i + 1) * segment_height + padding_y + 6
+        y_end = (i + 1) * segment_height + padding_y + 0
         segment_corners = np.array([[x_start, y_start], [x_end, y_start], [x_end, y_end], [x_start, y_end]], dtype='float32')
 
         # draw rect from segment_corners
