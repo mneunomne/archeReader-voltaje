@@ -21,6 +21,11 @@ class ImageProcessor:
         self.minMarkerPerimeterRate = aruco_defaults["minMarkerPerimeterRate"] # / 1000
         self.maxMarkerPerimeterRate = aruco_defaults["maxMarkerPerimeterRate"] # / 10
         self.polygonalApproxAccuracyRate = aruco_defaults["polygonalApproxAccuracyRate"] # / 1000
+        self.cornerRefinementWinSize = aruco_defaults["cornerRefinementWinSize"]
+        self.cornerRefinementMaxIterations = aruco_defaults["cornerRefinementMaxIterations"]
+        self.minDistanceToBorder = aruco_defaults["minDistanceToBorder"]
+        self.minOtsuStdDev = aruco_defaults["minOtsuStdDev"]
+        self.perspectiveRemovePixelPerCell = aruco_defaults["perspectiveRemovePixelPerCell"]
         self.storedDetections = ([], [])
     
     def init(self, args, archeReader):
@@ -50,6 +55,10 @@ class ImageProcessor:
         parameters.minMarkerPerimeterRate = self.minMarkerPerimeterRate / 1000
         parameters.maxMarkerPerimeterRate = self.maxMarkerPerimeterRate / 10
         parameters.polygonalApproxAccuracyRate = self.polygonalApproxAccuracyRate / 1000
+        parameters.cornerRefinementWinSize = self.cornerRefinementWinSize
+        parameters.cornerRefinementMaxIterations = self.cornerRefinementMaxIterations
+        parameters.minDistanceToBorder = self.minDistanceToBorder
+        parameters.perspectiveRemovePixelPerCell = self.perspectiveRemovePixelPerCell
     
         detector = aruco.ArucoDetector(aruco_dict, parameters)
                 

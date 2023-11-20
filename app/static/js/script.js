@@ -79,11 +79,14 @@ const initMap = function () {
 
 const updatePlanetariumTime = function (timestamp, az_step) {
   planetarium1.setClock(timestamp).calendarUpdate()
-  planetarium1.changeAzimuth(az_step)
   //planetarium1.drawImmediate();
   // planetarium1.drawPlanets();
   // planetarium1.draw();
 
+}
+
+const updatePlanetariumAz = function (az_step) {
+  planetarium1.changeAzimuth(az_step)
 }
 
 S(document).ready(function () {
@@ -105,6 +108,9 @@ S(document).ready(function () {
     if (event.key == 't') {
       //setRandomPosition()
       // toggleAzimuthMove
+      let s = data[0].shuffle()
+      console.log("s", s)
+      onSegmentData({data: s})
     }
     // if key is number 0-9, send get request to server /on_segment/<segment_number>
     if (event.key >= '0' && event.key <= '9') {
@@ -112,12 +118,25 @@ S(document).ready(function () {
       let segment_number = parseInt(event.key)
 
       onSegmentData({data: data[segment_number]})
-      
+      /*
       $.get("/on_segment/" + segment_number, function (data, status) {
         console.log("data", data)
       });
+      */
     } 
   });
+
+  // shuffle string function
+  String.prototype.shuffle = function () {
+    var a = this.split(""), n = a.length;
+    for(var i = n - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var tmp = a[i];
+        a[i] = a[j];
+        a[j] = tmp;
+    }
+    return a.join("");
+  }
 
   const setRandomPosition = function () {
     // test
@@ -150,7 +169,9 @@ S(document).ready(function () {
   
       const newTimestamp = startTime + progress * (data.timestamp - currentTime);
       
-      updatePlanetariumTime(new Date(newTimestamp), az);
+
+      updatePlanetariumAz(az)
+      // updatePlanetariumTime(new Date(newTimestamp), az);
   
       if (progress < 1) {
         requestAnimationFrame(updateTransition);
@@ -192,11 +213,44 @@ S(document).ready(function () {
       return parseFloat(result)
     })
     return {
-      lat: data[0],
-      lon: data[1],
-      timestamp: data[2],
-      az: data[3],
+      lat: validateLocation(data[0]),
+      lon: validateLocation(data[1]),
+      timestamp: validateTimestamp(data[2]),
+      az: validedAzimuth(data[3]),
     }
+  }
+
+  var validateLocation = function (num){
+    if (isNaN(num) || num == undefined || num == null) {
+      return 0
+    }
+    let s = num + ''
+    if (num > 90) {
+      num = parseFloat(s[0] + '.' + s.substring(1, s.length))
+    }
+    if (num < -90) {
+      num = parseFloat(s.substring(0, 2) + '.' + s.substring(2, s.length))
+    }
+    if (isNaN(num) || num == undefined || num == null) {
+      return 0
+    }
+    return num
+  }
+
+  var validateTimestamp = function (num){
+    console.log("validateTimestamp", num)
+    if (isNaN(num) || num == undefined || num == null) {
+      return 0
+    } 
+    return num
+  }
+
+  var validedAzimuth = function (num){
+    console.log("validedAzimuth", num)
+    if (isNaN(num) || num == undefined || num == null) {
+      return 0
+    }
+    return num % 360
   }
 /*
   // add socket events

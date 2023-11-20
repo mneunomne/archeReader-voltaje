@@ -16,17 +16,17 @@ SEGMENT_WIDTH = 68
 SEGMENT_HEIGHT = 68
 
 SEGMENT_OUTPUT_WIDTH = 700
-SEGMENT_OUTPUT_HEIGHT = 800
+SEGMENT_OUTPUT_HEIGHT = 700
 
 # ceramic data
 COLS = 5
 ROWS = 6
 INNER_COLS = 7
-INNER_ROWS = 8
+INNER_ROWS = 7
 
 # paths
 FOLDER_PATH = 'app/numerals/'
-TEST_FILE = 'app/test_images/test9.jpg'
+TEST_FILE = 'app/test_images/teste10.jpg'
 
 # aruco marker settings
 aruco_defaults = {
@@ -34,8 +34,8 @@ aruco_defaults = {
   "adaptiveThreshWinSizeMax": 25,
   "adaptiveThreshWinSizeStep": 3,
   "adaptiveThreshConstant": 3,
-  "minMarkerPerimeterRate": 150,
-  "maxMarkerPerimeterRate": 200,
+  "minMarkerPerimeterRate": 80,
+  "maxMarkerPerimeterRate": 69,
   "polygonalApproxAccuracyRate": 50,
   "cornerRefinementWinSize": 5,
   "cornerRefinementMaxIterations": 30,

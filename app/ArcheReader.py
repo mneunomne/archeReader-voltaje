@@ -86,7 +86,6 @@ class ArcheReader:
     cv2.createTrackbar('minMarkerPerimeterRate', 'arche-reading', aruco_defaults["minMarkerPerimeterRate"], 1000, self.on_trackbar)
     cv2.createTrackbar('maxMarkerPerimeterRate', 'arche-reading', aruco_defaults["maxMarkerPerimeterRate"], 100,  self.on_trackbar)
     cv2.createTrackbar('polygonalApproxAccuracyRate', 'arche-reading', aruco_defaults["polygonalApproxAccuracyRate"], 1000, self.on_trackbar)
-    
     cv2.createTrackbar('cornerRefinementWinSize', 'arche-reading', aruco_defaults["cornerRefinementWinSize"], 100, self.on_trackbar)
     cv2.createTrackbar('cornerRefinementMaxIterations', 'arche-reading', aruco_defaults["cornerRefinementMaxIterations"], 100, self.on_trackbar)
     cv2.createTrackbar('minDistanceToBorder', 'arche-reading', aruco_defaults["minDistanceToBorder"], 100, self.on_trackbar)
@@ -102,7 +101,6 @@ class ArcheReader:
     self.minMarkerPerimeterRate = cv2.getTrackbarPos('minMarkerPerimeterRate', 'arche-reading')
     self.maxMarkerPerimeterRate = cv2.getTrackbarPos('maxMarkerPerimeterRate', 'arche-reading')
     self.polygonalApproxAccuracyRate = cv2.getTrackbarPos('polygonalApproxAccuracyRate', 'arche-reading')
-
     self.cornerRefinementWinSize = cv2.getTrackbarPos('cornerRefinementWinSize', 'arche-reading')
     self.cornerRefinementMaxIterations = cv2.getTrackbarPos('cornerRefinementMaxIterations', 'arche-reading')
     self.minDistanceToBorder = cv2.getTrackbarPos('minDistanceToBorder', 'arche-reading')
@@ -226,9 +224,9 @@ class ArcheReader:
     # rotate 90 degrees
     _w = SEGMENT_OUTPUT_WIDTH
     _h = SEGMENT_OUTPUT_HEIGHT
-    padding = 20
-    padding_x = padding
-    padding_y = padding + 10
+    padding = 22
+    padding_x = padding + 22
+    padding_y = padding + 8
     # Calculate the dimensions of each segment
     segment_width = (_w - padding_x * 2) // INNER_COLS
     segment_height = (_h - padding_y * 2)  // INNER_ROWS
@@ -240,9 +238,9 @@ class ArcheReader:
       for j in range(INNER_COLS):
         # Calculate the coordinates for the current segment
         x_start = j * segment_width + padding_x
-        y_start = i * segment_height + padding_y
+        y_start = i * segment_height + padding_y + 6
         x_end = (j + 1) * segment_width + padding_x
-        y_end = (i + 1) * segment_height + padding_y
+        y_end = (i + 1) * segment_height + padding_y + 6
         segment_corners = np.array([[x_start, y_start], [x_end, y_start], [x_end, y_end], [x_start, y_end]], dtype='float32')
 
         # draw rect from segment_corners
