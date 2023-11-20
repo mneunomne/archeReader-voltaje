@@ -3,13 +3,15 @@ from globals import *
 import numpy as np
 import cv2.aruco as aruco
 from utils import list_ports, load_templates, get_center_point, template_matching
-from flask_server import app, sendVideoOutput, sendCroppedOutput, socketio, imageProcessor
-from socket_connection import connectSocket
+from flask_server import app, sendVideoOutput, sendCroppedOutput, imageProcessor
 import threading
 import queue
+from kiosk import run_kiosk
 
 ready_to_read = False
 thread_flask = None
+
+server_url = "http://{}:{}/".format(FLASK_SERVER_IP, FLASK_SERVER_PORT)
 
 class ArcheReader:
   
@@ -28,14 +30,20 @@ class ArcheReader:
     self.detections = [[],[]]
     
     self.detections_queue = queue.Queue()  # Queue for passing detections between threads
+    self.cropped_queue = queue.Queue()  # Queue for passing detections between threads
     
     imageProcessor.init(args, self)
         
     # start flask
     if (args.flask):
-      thread_flask = threading.Thread(target=socketio.run, args=(app, FLASK_SERVER_IP, FLASK_SERVER_PORT,))
+      thread_flask = threading.Thread(target=app.run, args=(FLASK_SERVER_IP, FLASK_SERVER_PORT,))
       thread_flask.start()
     
+    if (args.kiosk):
+      thread_kiosk = threading.Thread(target=run_kiosk, args=(server_url, False))
+      thread_kiosk.start()
+
+
     # load templates
     self.templates = load_templates(FOLDER_PATH)
     
@@ -47,6 +55,13 @@ class ArcheReader:
     self.minMarkerPerimeterRate = aruco_defaults["minMarkerPerimeterRate"] # / 1000
     self.maxMarkerPerimeterRate = aruco_defaults["maxMarkerPerimeterRate"] # / 10
     self.polygonalApproxAccuracyRate = aruco_defaults["polygonalApproxAccuracyRate"] # / 1000
+    self.cornerRefinementWinSize = aruco_defaults["cornerRefinementWinSize"]
+    self.cornerRefinementMaxIterations = aruco_defaults["cornerRefinementMaxIterations"]
+    self.minDistanceToBorder = aruco_defaults["minDistanceToBorder"]
+    self.minOtsuStdDev = aruco_defaults["minOtsuStdDev"]
+    self.perspectiveRemovePixelPerCell = aruco_defaults["perspectiveRemovePixelPerCell"]
+    
+    
     cv2.namedWindow('arche-reading')
     if self.test_parameters:
       self.createTrackbars()
@@ -62,9 +77,6 @@ class ArcheReader:
     _,working_ports,_ = list_ports()
     print("working_ports", working_ports)
     
-  def set_detections(self, detections):
-    self.detections = detections
-    
   def createTrackbars(self):
     # Create trackbars
     cv2.createTrackbar('adaptiveThreshWinSizeMin', 'arche-reading', aruco_defaults["adaptiveThreshWinSizeMin"], 100, self.on_trackbar)
@@ -75,6 +87,12 @@ class ArcheReader:
     cv2.createTrackbar('maxMarkerPerimeterRate', 'arche-reading', aruco_defaults["maxMarkerPerimeterRate"], 100,  self.on_trackbar)
     cv2.createTrackbar('polygonalApproxAccuracyRate', 'arche-reading', aruco_defaults["polygonalApproxAccuracyRate"], 1000, self.on_trackbar)
     
+    cv2.createTrackbar('cornerRefinementWinSize', 'arche-reading', aruco_defaults["cornerRefinementWinSize"], 100, self.on_trackbar)
+    cv2.createTrackbar('cornerRefinementMaxIterations', 'arche-reading', aruco_defaults["cornerRefinementMaxIterations"], 100, self.on_trackbar)
+    cv2.createTrackbar('minDistanceToBorder', 'arche-reading', aruco_defaults["minDistanceToBorder"], 100, self.on_trackbar)
+    cv2.createTrackbar('perspectiveRemovePixelPerCell', 'arche-reading', aruco_defaults["perspectiveRemovePixelPerCell"], 100, self.on_trackbar)
+
+
   def on_trackbar(self, value):
     # Update parameters based on trackbar values
     self.adaptiveThreshWinSizeMin = cv2.getTrackbarPos('adaptiveThreshWinSizeMin', 'arche-reading')
@@ -84,6 +102,16 @@ class ArcheReader:
     self.minMarkerPerimeterRate = cv2.getTrackbarPos('minMarkerPerimeterRate', 'arche-reading')
     self.maxMarkerPerimeterRate = cv2.getTrackbarPos('maxMarkerPerimeterRate', 'arche-reading')
     self.polygonalApproxAccuracyRate = cv2.getTrackbarPos('polygonalApproxAccuracyRate', 'arche-reading')
+
+    self.cornerRefinementWinSize = cv2.getTrackbarPos('cornerRefinementWinSize', 'arche-reading')
+    self.cornerRefinementMaxIterations = cv2.getTrackbarPos('cornerRefinementMaxIterations', 'arche-reading')
+    self.minDistanceToBorder = cv2.getTrackbarPos('minDistanceToBorder', 'arche-reading')
+    self.perspectiveRemovePixelPerCell = cv2.getTrackbarPos('perspectiveRemovePixelPerCell', 'arche-reading')
+
+    print("cornerRefinementWinSize", self.cornerRefinementWinSize)
+    print("cornerRefinementMaxIterations", self.cornerRefinementMaxIterations)
+    print("minDistanceToBorder", self.minDistanceToBorder)
+    print("perspectiveRemovePixelPerCell", self.perspectiveRemovePixelPerCell)
     print("adaptiveThreshWinSizeMin", self.adaptiveThreshWinSizeMin)
     print("adaptiveThreshWinSizeMax", self.adaptiveThreshWinSizeMax)
     print("adaptiveThreshWinSizeStep", self.adaptiveThreshWinSizeStep)
@@ -119,6 +147,11 @@ class ArcheReader:
               print("segment_data", segment_data)
               sendCroppedOutput(roi_cropped)
               cv2.imshow('cropped', roi_cropped)
+        except queue.Empty:
+            pass
+        try:
+            roi_cropped = self.cropped_queue.get_nowait()  
+            cv2.imshow('cropped', roi_cropped)
         except queue.Empty:
             pass
       
@@ -245,11 +278,13 @@ class ArcheReader:
   
   def decode_segment_data(self, segment_data):
     # read data from top to bottom and left to right
-    segment_data = sorted(segment_data, key=lambda x: (x["col"], x["row"]))
+    segment_data = sorted(segment_data, key=lambda x: (x["row"], x["col"]))
     s = ""
     for d in segment_data:
       if d["matched_filename"] == '10':
         s += "0"
+      elif d["matched_filename"] == '20':
+        s += "X"
       else:
         s += d["matched_filename"]
     return s
@@ -265,10 +300,17 @@ class ArcheReader:
     image = aruco.drawDetectedMarkers(video_output, markers, ids)
     return image
     
-  def set_detections(self, detections):
+  def set_detections(self, detections, image, is_valid):
     self.detections = detections
     # Put the new detections in the queue for the main thread to pick up
-    self.detections_queue.put(detections)
+    # self.detections_queue.put(detections)
+    if is_valid:
+      segment_data, roi_cropped = self.process_detections(self.detections, image)
+      self.cropped_queue.put(roi_cropped)
+      data_message = self.decode_segment_data(segment_data)
+      return data_message
+    else:
+      return ""
     
   def clear(self):
     # Clear the detections
@@ -334,7 +376,7 @@ class ArcheReader:
         # rotate 90 degrees
         _w = output_width
         _h = output_height
-        padding = 20
+        padding = 0
         padding_x = padding
         padding_y = padding
         # Calculate the dimensions of each segment
@@ -404,7 +446,7 @@ class ArcheReader:
 
   def sendSocketData(self, data_message):
     print("sendSocketData", data_message)
-    socketio.emit('detection_data', {'data': data_message})
+    # socketio.emit('detection_data', {'data': data_message})
     # socketio.send('detection_data', data)
   
   def test_detection(self, raw_image):
@@ -424,6 +466,11 @@ class ArcheReader:
     parameters.minMarkerPerimeterRate = self.minMarkerPerimeterRate / 1000
     parameters.maxMarkerPerimeterRate = self.maxMarkerPerimeterRate / 10
     parameters.polygonalApproxAccuracyRate = self.polygonalApproxAccuracyRate / 1000
+    parameters.cornerRefinementWinSize = self.cornerRefinementWinSize
+    parameters.cornerRefinementMaxIterations = self.cornerRefinementMaxIterations
+    parameters.minDistanceToBorder = self.minDistanceToBorder
+    parameters.perspectiveRemovePixelPerCell = self.perspectiveRemovePixelPerCell
+    
     # detect markers
     detector = aruco.ArucoDetector(aruco_dict, parameters)
     
