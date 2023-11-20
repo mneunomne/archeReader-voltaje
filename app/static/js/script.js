@@ -117,12 +117,13 @@ S(document).ready(function () {
       // send get request to server
       let segment_number = parseInt(event.key)
 
-      onSegmentData({data: data[segment_number]})
-      /*
+      // onSegmentData({data: data[segment_number]})
+      
       $.get("/on_segment/" + segment_number, function (data, status) {
         console.log("data", data)
+        onSegmentData({data: data})
       });
-      */
+      
     } 
   });
 

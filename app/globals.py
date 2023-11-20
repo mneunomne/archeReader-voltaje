@@ -34,7 +34,7 @@ aruco_defaults = {
   "adaptiveThreshWinSizeMax": 25,
   "adaptiveThreshWinSizeStep": 3,
   "adaptiveThreshConstant": 3,
-  "minMarkerPerimeterRate": 80,
+  "minMarkerPerimeterRate": 160,
   "maxMarkerPerimeterRate": 69,
   "polygonalApproxAccuracyRate": 50,
   "cornerRefinementWinSize": 5,
