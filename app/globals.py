@@ -26,7 +26,7 @@ INNER_ROWS = 7
 
 # paths
 FOLDER_PATH = 'app/numerals/'
-TEST_FILE = 'app/test_images/teste10.jpg'
+TEST_FILE = 'app/test_images/teste11.png'
 
 # aruco marker settings
 aruco_defaults = {

@@ -260,6 +260,10 @@ class ArcheReader:
         # gray segment
         gray_segment = cv2.cvtColor(segment, cv2.COLOR_BGR2GRAY)
         
+        # improve contrast
+        gray_segment = cv2.equalizeHist(gray_segment)
+        
+                
         # Perform template matching
         matched_template, matched_filename, percentage = template_matching(gray_segment, self.templates)
         matched_filename = matched_filename.split(".")[0]
