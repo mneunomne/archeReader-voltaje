@@ -42,7 +42,8 @@ def gen_frames():  # generate frame by frame from camera
             yield (b'--frame\r\n'
                 b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')  # concat frame one by one and show result
 
-def gen_cropped():  # generate frame by frame from camera
+def gen_cropped():
+    # generate frame by frame from camera
     global cropped_output
     # Capture frame-by-frame
     if cropped_output is None:
