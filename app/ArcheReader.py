@@ -160,14 +160,11 @@ class ArcheReader:
 
       # Convert the image to LAB color space
       lab = cv2.cvtColor(output_image, cv2.COLOR_BGR2LAB)
-
       # Separate the LAB channels
       l, a, b = cv2.split(lab)
-
       # Apply CLAHE to the L channel
       clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(10, 10))
       cl = clahe.apply(l)
-
       # Merge the enhanced L channel with the original A and B channels
       limg = cv2.merge((cl, a, b))
 
@@ -258,8 +255,22 @@ class ArcheReader:
     segment_width = (_w - padding_x * 2) // INNER_COLS
     segment_height = ((_h - padding_y * 2)  // INNER_ROWS)
     
-    kernel = np.array([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
-    roi_cropped = cv2.filter2D(roi_cropped, -1, kernel)
+    #gray_image = cv2.cvtColor(roi_cropped, cv2.COLOR_BGR2GRAY)
+
+    blurred_image = cv2.GaussianBlur(roi_cropped, (3, 3), 0)
+    #clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    #enhanced_image = clahe.apply(blurred_image)
+    # Convert the image to LAB color space
+    lab = cv2.cvtColor(blurred_image, cv2.COLOR_BGR2LAB)
+    # Separate the LAB channels
+    l, a, b = cv2.split(lab)
+    # Apply CLAHE to the L channel
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(10, 10))
+    cl = clahe.apply(l)
+    # Merge the enhanced L channel with the original A and B channels
+    limg = cv2.merge((cl, a, b))
+    # Convert the image back to BGR color space
+    roi_cropped = cv2.cvtColor(limg, cv2.COLOR_LAB2BGR)
     
     segment_data = []
     # Loop through the grid and extract each segment
@@ -288,7 +299,7 @@ class ArcheReader:
         gray_segment = cv2.cvtColor(segment, cv2.COLOR_BGR2GRAY)
         
         # improve contrast
-        gray_segment = cv2.equalizeHist(gray_segment)
+        #gray_segment = cv2.equalizeHist(gray_segment)
         
                 
         # Perform template matching
@@ -346,7 +357,7 @@ class ArcheReader:
     
   def clear(self):
     # Clear the detections
-    self.detections = [([], [])]
+    self.detections = ([], [])
     self.detections_queue.put(([], []))  
   
   def get_image(self):
@@ -359,6 +370,7 @@ class ArcheReader:
     if self.capture == None:
       self.start_cam()
       self.capture = cv2.VideoCapture(WEBCAM)
+      #self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
     if self.capture.isOpened():
       #do something
       ret, frame = self.capture.read()

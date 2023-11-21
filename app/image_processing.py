@@ -104,8 +104,6 @@ class ImageProcessor:
         # find if ids contains top_left, top_right, bottom_left, bottom_right
         corner_ids = [top_left, top_right, bottom_left, bottom_right]
 
-        print("corner_ids", corner_ids, ids)
-
         for index, id in enumerate(ids):
             if id in corner_ids:
                 # remove element from corners

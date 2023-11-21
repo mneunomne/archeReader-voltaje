@@ -90,7 +90,7 @@ def on_segment(segmentIndex):
         while not is_valid and attempts < 500:
             attempts = attempts + 1
             is_valid, msg = imageProcessor.process_image(video_output, segmentIndex)
-            print('is_valid', is_valid, attempts)
+            # print('is_valid', is_valid, attempts)
             if is_valid: 
                 attempts = 500
         if is_valid:
