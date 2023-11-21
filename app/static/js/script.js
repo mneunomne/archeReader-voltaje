@@ -14,8 +14,12 @@ var currentAz = 45;
 const messageContainer = document.getElementById('characters')
 const skyContainer = document.getElementById('skymap')
 
+const video_width = 800
+const video_height = 600
 
 const transition_duration = 4000
+
+var sky_height; 
 
 const socket = new WebSocket(
   "ws://0.0.0.0:8025/arche-scriptures"
@@ -57,7 +61,7 @@ const initPlanetarium = function (w, h) {
     scalestars: 3,
     scaleplanets: 3,
     width: w ,
-    height: h / 2,// + 15,
+    height: sky_height,// + 15,
     keyboard: false, 
     mouse: true,
     constellations: true,
@@ -83,28 +87,28 @@ const initMap = function () {
 const updatePlanetariumTime = function (timestamp, az_step) {
   planetarium1.setClock(timestamp)//.calendarUpdate()
   planetarium1.changeAzimuth(az_step)
-
-  //var time_diff = timestamp - currentTime
-
-  //console.log("time_diff", time_diff, currentTime)
-
-
-  //planetarium1.advanceTime(time_diff/100000, 1)
-
-  // 1 15   100000 15*5
-  //planetarium1.drawImmediate();
-  // planetarium1.drawPlanets();
-  // planetarium1.draw();
-
 }
 
 const updatePlanetariumAz = function (az_step) {
   planetarium1.changeAzimuth(az_step)
 }
 
+const resizeVideo = function () {
+  var ratio = video_width / video_height
+
+  let w = window.innerWidth
+  let h = w/ratio
+
+  sky_height = window.innerHeight - h
+
+  document.getElementById('video').style=`width: ${w}px; height: ${h}px;`
+  
+}
+
 S(document).ready(function () {
   let w = window.innerWidth;
   let h = window.innerHeight;
+  resizeVideo();
   initPlanetarium(w, h);
   // initMap()
 
@@ -140,6 +144,11 @@ S(document).ready(function () {
       
     } 
   });
+
+  window.addEventListener('resize', function (event) {
+    console.log("resize")
+    resizeVideo()
+  })
 
   // shuffle string function
   String.prototype.shuffle = function () {
