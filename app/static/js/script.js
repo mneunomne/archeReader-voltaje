@@ -21,6 +21,15 @@ const transition_duration = 4000
 
 var sky_height; 
 
+window.onload = function() {
+  setTimeout(() => {
+    if(!window.location.hash) {
+        window.location = window.location + '#loaded';
+        window.location.reload();
+    }
+  }, 5000)
+}
+
 const socket = new WebSocket(
   "ws://0.0.0.0:8025/arche-scriptures"
 );
