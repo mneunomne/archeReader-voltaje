@@ -387,7 +387,7 @@ function VirtualSky(input){
 		'stereo': {
 			title: 'Stereographic projection',
 			azel2xy: function(az,el,w,h){
-				var f = 0.37;
+				var f = 0.42;
 				var sinel1 = 0;
 				var cosel1 = 1;
 				var cosaz = Math.cos((az-Math.PI));
@@ -399,7 +399,7 @@ function VirtualSky(input){
 			},
 			xy2azel: function(x, y, w, h) {
 				//console.log("Stereooooooo")
-				var f = 0.37;
+				var f = 0.42;
 				var sinel1 = 0;
 				var cosel1 = 1;
 				var X = (x - w/2) / h;
@@ -3376,7 +3376,7 @@ VirtualSky.prototype.advanceTime = function(by,wait){
 		clearInterval(this.interval_calendar);
 		this.interval_time = window.setInterval(fn,wait,this,by);
 		// Whilst animating we'll periodically check to see if the calendar events need calling
-		this.interval_calendar = window.setInterval(function(vs){ vs.calendarUpdate(); },1000,this);
+		//this.interval_calendar = window.setInterval(function(vs){ vs.calendarUpdate(); },1000,this);
 	}
 	return this;
 };

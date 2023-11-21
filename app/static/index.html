@@ -44,7 +44,14 @@
 			filter: blur(5px);
 		}
 		#video {
-			display: none;
+			position: fixed;
+			z-index: 3;
+			left: 50%;
+			transform: translateX(-50%);
+			bottom: 0;
+			width: 1280px;
+			height: 960px;
+			filter: saturate(1.5);
 		}
 		#map {
 			height: 50vh;
@@ -58,14 +65,20 @@
 		}
 		#characters {
 			position: absolute;
-			bottom: 100px;
+			top: 0px;
 			z-index: 9;
+			/* height: 99px; */
+			text-align: right;
 			width: 100vw;
-			text-align: center;
+		}
+
+		.skymap_btn_help {
+			display: none !important;
 		}
 
 		#characters img {
 			opacity: 0;
+			height: 35px;
 			transition: opacity 0.5s;
 		}
 		
@@ -83,6 +96,8 @@
 	<div id="skymap"></div>
 
 	<div id="characters"></div>
+
+	<img id="video" src="{{ url_for('video_feed') }}" width="1920" height="1080">
 	
 	<script src="./js/script.js" type="text/javascript"></script>
 </body>

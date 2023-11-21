@@ -14,6 +14,9 @@ var currentAz = 45;
 const messageContainer = document.getElementById('characters')
 const skyContainer = document.getElementById('skymap')
 
+
+const transition_duration = 4000
+
 const socket = new WebSocket(
   "ws://0.0.0.0:8025/arche-scriptures"
 );
@@ -54,8 +57,8 @@ const initPlanetarium = function (w, h) {
     scalestars: 3,
     scaleplanets: 3,
     width: w ,
-    height: h,// + 15,
-    keyboard: true, 
+    height: h / 2,// + 15,
+    keyboard: false, 
     mouse: true,
     constellations: true,
     constellationlabels: true,
@@ -78,7 +81,17 @@ const initMap = function () {
 }
 
 const updatePlanetariumTime = function (timestamp, az_step) {
-  planetarium1.setClock(timestamp).calendarUpdate()
+  planetarium1.setClock(timestamp)//.calendarUpdate()
+  planetarium1.changeAzimuth(az_step)
+
+  //var time_diff = timestamp - currentTime
+
+  //console.log("time_diff", time_diff, currentTime)
+
+
+  //planetarium1.advanceTime(time_diff/100000, 1)
+
+  // 1 15   100000 15*5
   //planetarium1.drawImmediate();
   // planetarium1.drawPlanets();
   // planetarium1.draw();
@@ -117,12 +130,13 @@ S(document).ready(function () {
       // send get request to server
       let segment_number = parseInt(event.key)
 
-      // onSegmentData({data: data[segment_number]})
-      
+      onSegmentData({data: data[segment_number]})
+      /*
       $.get("/on_segment/" + segment_number, function (data, status) {
         console.log("data", data)
         onSegmentData({data: data})
       });
+      */
       
     } 
   });
@@ -159,6 +173,7 @@ S(document).ready(function () {
     //var total = 0
     var lastEllapsed = Date.now() - startTime
     // updateMapPosition(data.lat, data.lon);
+
     function updateTransition () {
       const elapsed = Date.now() - startTime;
       var lastProg = (elapsed - lastEllapsed) / duration
@@ -171,8 +186,8 @@ S(document).ready(function () {
       const newTimestamp = startTime + progress * (data.timestamp - currentTime);
       
 
-      updatePlanetariumAz(az)
-      // updatePlanetariumTime(new Date(newTimestamp), az);
+      // updatePlanetariumAz(az)
+      updatePlanetariumTime(new Date(newTimestamp), az);
   
       if (progress < 1) {
         requestAnimationFrame(updateTransition);
@@ -182,7 +197,7 @@ S(document).ready(function () {
         currentAz = data.az
         setTimeout(() => {
           updatePlanetariumTime(new Date(data.timestamp), 0);
-          planetarium1.setClock(1)
+          planetarium1.setClock(1).calendarUpdate()
         }, 1)
       }
     }
@@ -278,12 +293,12 @@ S(document).ready(function () {
     console.log("decode data", data)
     // updatePlanetarium(data.lat, data.lon, data.timestamp, data.az)
 
-    transitionPlanetarium(data, 5000)
+    transitionPlanetarium(data, transition_duration)
 
     hideMessage()
     setTimeout(() => {
       displayMessage(string)
-    }, 5000)
+    }, transition_duration)
   }
 
   const displayMessage = function (msg) {

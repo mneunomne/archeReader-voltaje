@@ -31,14 +31,15 @@ def sendCroppedOutput(frame):
 
 def gen_frames():  # generate frame by frame from camera
     global video_output
-    # Capture frame-by-frame
-    if video_output is None:
-        return
-    else:
-        frame = video_output.copy()
-        ret, buffer = cv2.imencode('.jpg', frame)
-        frame = buffer.tobytes()
-        yield (b'--frame\r\n'
+    while True:
+        # Capture frame-by-frame
+        if video_output is None:
+            break
+        else:
+            frame = video_output.copy()
+            ret, buffer = cv2.imencode('.jpg', frame)
+            frame = buffer.tobytes()
+            yield (b'--frame\r\n'
                 b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')  # concat frame one by one and show result
 
 def gen_cropped():  # generate frame by frame from camera
@@ -98,11 +99,12 @@ def on_segment(segmentIndex):
         imageProcessor.clear_stored_markers()
         is_valid = False
         attempts = 0
-        while not is_valid and attempts < 1000:
+        while not is_valid and attempts < 500:
+            attempts = attempts + 1
             is_valid, msg = imageProcessor.process_image(video_output, segmentIndex)
-            # print('is_valid', is_valid)
+            print('is_valid', is_valid, attempts)
             if is_valid: 
-                attempts = 1000
+                attempts = 500
         if is_valid:
             print('is_valid', is_valid)
             return Response(msg, mimetype='text/plain')

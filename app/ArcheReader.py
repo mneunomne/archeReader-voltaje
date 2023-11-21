@@ -229,7 +229,7 @@ class ArcheReader:
     padding_y = padding + 10
     # Calculate the dimensions of each segment
     segment_width = (_w - padding_x * 2) // INNER_COLS
-    segment_height = ((_h - padding_y * 2)  // INNER_ROWS) - 2
+    segment_height = ((_h - padding_y * 2)  // INNER_ROWS)
     
     kernel = np.array([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
     roi_cropped = cv2.filter2D(roi_cropped, -1, kernel)

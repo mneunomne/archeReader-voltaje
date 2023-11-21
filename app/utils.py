@@ -59,7 +59,6 @@ def template_matching(segment, templates):
         if max_val > best_match_score:
             best_match_score = max_val
             best_template = template, filename, str(float("{:.3f}".format(best_match_score)))
-
     return best_template
 
 def perspective_transform(segment, segment_corners):
