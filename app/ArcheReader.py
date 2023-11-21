@@ -153,12 +153,33 @@ class ArcheReader:
         except queue.Empty:
             pass
       
+      # Convert the image to LAB color space
+      lab = cv2.cvtColor(video_output, cv2.COLOR_BGR2LAB)
+
+      # Separate the LAB channels
+      l, a, b = cv2.split(lab)
+
+      # Apply CLAHE to the L channel
+      clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(10, 10))
+      cl = clahe.apply(l)
+
+      # Merge the enhanced L channel with the original A and B channels
+      limg = cv2.merge((cl, a, b))
+
+      # Convert the image back to BGR color space
+      video_output = cv2.cvtColor(limg, cv2.COLOR_LAB2BGR)
+      
+      # more red channel
+      video_output[:, :, 2] = cv2.addWeighted(video_output[:, :, 2], 1.50, np.zeros(video_output[:, :, 2].shape, video_output[:, :, 2].dtype), 0, 0)
+      
       if len(self.detections[0]) == 4 and len(self.detections[1]) == 4:
         video_output = self.display_detections(self.detections, video_output)
-        
+      
+      # increase contrast
+      video_output = cv2.convertScaleAbs(video_output, alpha=0.65, beta=2)
+      
       # send video to flask
       sendVideoOutput(video_output)
-      # print("self.detections", self.detections)
       
       cv2.imshow('arche-reading', video_output)
       if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -275,6 +296,7 @@ class ArcheReader:
             "matched_filename": matched_filename,
             "row": i,
             "col": j,
+            #"image": gray_segment,
         }
         segment_data.append(data)
         # cv2.imshow(f'Segment ({i}, {j})', segment)
