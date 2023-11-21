@@ -1,5 +1,6 @@
 
 var planetarium1;
+var planetarium2;
 var map;
 
 var timestamp
@@ -47,7 +48,7 @@ const data = dates.map((date) => {
 
 const initPlanetarium = function (w, h) {
   let d = new Date("October 25, 1985 12:00:00");
-  planetarium1 = S.virtualsky({
+  const options = {
     id: 'skymap',
     projection: 'stereo',
     ra: -90,
@@ -66,19 +67,29 @@ const initPlanetarium = function (w, h) {
     ground: true,
     magnitude: 20,
     meteorshowers: true,
-    showstarlabels: true,
-    scalestars: 3,
+    showstarlabels: false,
+    scalestars: 2,
     scaleplanets: 3,
     width: w ,
-    height: sky_height,// + 15,
+    height: sky_height + 5,// + 15,
     keyboard: false, 
     mouse: true,
     constellations: true,
-    constellationlabels: true,
+    constellationlabels: false,
     lang: 'es',
     fontsize: '14px',
     clock: startDate,
     credit: false,
+  }
+  planetarium1 = S.virtualsky(options);
+  planetarium2 = S.virtualsky({
+    ...options,
+    showposition: false,
+    showdate: false,
+    id: 'skymap2',
+    onstellationlabels: false,
+    showstarlabels: false,
+    height: window.innerHeight - sky_height
   });
 }
 
@@ -96,10 +107,13 @@ const initMap = function () {
 const updatePlanetariumTime = function (timestamp, az_step) {
   planetarium1.setClock(timestamp)//.calendarUpdate()
   planetarium1.changeAzimuth(az_step)
+  planetarium2.setClock(timestamp)//.calendarUpdate()
+  planetarium2.changeAzimuth(az_step)
 }
 
 const updatePlanetariumAz = function (az_step) {
   planetarium1.changeAzimuth(az_step)
+  planetarium2.changeAzimuth(az_step)
 }
 
 const resizeVideo = function () {
@@ -107,10 +121,12 @@ const resizeVideo = function () {
 
   let w = window.innerWidth
   let h = w/ratio
+  let h2 = window.innerHeight - h
 
   sky_height = window.innerHeight - h
 
   document.getElementById('video').style=`width: ${w}px; height: ${h}px;`
+  document.getElementById('video2').style=`width: ${w}px; height: ${h2}px;`
   
 }
 
@@ -143,13 +159,13 @@ S(document).ready(function () {
       // send get request to server
       let segment_number = parseInt(event.key)
 
-      onSegmentData({data: data[segment_number]})
-      /*
+      //onSegmentData({data: data[segment_number]})
+      
       $.get("/on_segment/" + segment_number, function (data, status) {
         console.log("data", data)
         onSegmentData({data: data})
       });
-      */
+    
       
     } 
   });
