@@ -143,7 +143,6 @@ class ArcheReader:
               data_message = self.decode_segment_data(segment_data)
               self.sendSocketData(data_message)
               print("segment_data", segment_data)
-              sendCroppedOutput(roi_cropped)
               cv2.imshow('cropped', roi_cropped)
         except queue.Empty:
             pass
@@ -153,8 +152,14 @@ class ArcheReader:
         except queue.Empty:
             pass
       
+
+      # send video to flask
+      sendVideoOutput(video_output)
+
+      output_image = video_output
+
       # Convert the image to LAB color space
-      lab = cv2.cvtColor(video_output, cv2.COLOR_BGR2LAB)
+      lab = cv2.cvtColor(output_image, cv2.COLOR_BGR2LAB)
 
       # Separate the LAB channels
       l, a, b = cv2.split(lab)
@@ -167,19 +172,20 @@ class ArcheReader:
       limg = cv2.merge((cl, a, b))
 
       # Convert the image back to BGR color space
-      video_output = cv2.cvtColor(limg, cv2.COLOR_LAB2BGR)
+      output_image = cv2.cvtColor(limg, cv2.COLOR_LAB2BGR)
       
       # more red channel
-      video_output[:, :, 2] = cv2.addWeighted(video_output[:, :, 2], 1.50, np.zeros(video_output[:, :, 2].shape, video_output[:, :, 2].dtype), 0, 0)
+      output_image[:, :, 2] = cv2.addWeighted(output_image[:, :, 2], 1.50, np.zeros(output_image[:, :, 2].shape, output_image[:, :, 2].dtype), 0, 0)
       
       if len(self.detections[0]) == 4 and len(self.detections[1]) == 4:
         video_output = self.display_detections(self.detections, video_output)
+        output_image = self.display_detections(self.detections, output_image)
       
       # increase contrast
-      video_output = cv2.convertScaleAbs(video_output, alpha=0.65, beta=2)
+      output_image = cv2.convertScaleAbs(video_output, alpha=0.65, beta=2)
       
-      # send video to flask
-      sendVideoOutput(video_output)
+      # send video to web
+      sendCroppedOutput(output_image)
       
       cv2.imshow('arche-reading', video_output)
       if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -340,7 +346,7 @@ class ArcheReader:
     
   def clear(self):
     # Clear the detections
-    self.detections = []
+    self.detections = [([], [])]
     self.detections_queue.put(([], []))  
   
   def get_image(self):

@@ -30,29 +30,16 @@ def sendCroppedOutput(frame):
     cropped_output = frame
 
 def gen_frames():  # generate frame by frame from camera
-    global video_output
+    global cropped_output
     while True:
         # Capture frame-by-frame
-        if video_output is None:
+        if cropped_output is None:
             break
         else:
-            frame = video_output.copy()
+            frame = cropped_output.copy()
             ret, buffer = cv2.imencode('.jpg', frame)
             frame = buffer.tobytes()
             yield (b'--frame\r\n'
-                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')  # concat frame one by one and show result
-
-def gen_cropped():
-    # generate frame by frame from camera
-    global cropped_output
-    # Capture frame-by-frame
-    if cropped_output is None:
-        return
-    else:
-        frame = cropped_output.copy()
-        ret, buffer = cv2.imencode('.jpg', frame)
-        frame = buffer.tobytes()
-        yield (b'--frame\r\n'
                 b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')  # concat frame one by one and show result
 
 def getState():
