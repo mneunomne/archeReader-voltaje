@@ -75,7 +75,7 @@ const initPlanetarium = function (w, h) {
     keyboard: false, 
     mouse: true,
     constellations: true,
-    constellationlabels: false,
+    constellationlabels: true,
     lang: 'es',
     fontsize: '14px',
     clock: startDate,
@@ -87,7 +87,7 @@ const initPlanetarium = function (w, h) {
     showposition: false,
     showdate: false,
     id: 'skymap2',
-    onstellationlabels: false,
+    constellationlabels: false,
     showstarlabels: false,
     height: window.innerHeight - sky_height
   });
