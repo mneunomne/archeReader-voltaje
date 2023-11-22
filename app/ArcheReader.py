@@ -305,6 +305,7 @@ class ArcheReader:
         # Perform template matching
         matched_template, matched_filename, percentage = template_matching(gray_segment, self.templates)
         matched_filename = matched_filename.split(".")[0]
+        matched_filename = matched_filename.split("_")[0]
         roi_cropped = cv2.putText(roi_cropped, matched_filename, (x_start, y_start+20),  cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0) )
         roi_cropped = cv2.putText(roi_cropped, percentage, (x_start, y_start+40),  cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0) )
         
