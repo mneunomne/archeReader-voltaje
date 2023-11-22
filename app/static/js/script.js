@@ -69,10 +69,10 @@ const initPlanetarium = function (w, h) {
     meteorshowers: true,
     showstarlabels: false,
     scalestars: 2,
-    scaleplanets: 3,
+    scaleplanets: 2,
     width: w ,
     height: sky_height + 5,// + 15,
-    keyboard: false, 
+    //;keyboard: false, 
     mouse: true,
     constellations: true,
     constellationlabels: true,
@@ -85,6 +85,7 @@ const initPlanetarium = function (w, h) {
   planetarium2 = S.virtualsky({
     ...options,
     showposition: false,
+    showplanets: false,
     showdate: false,
     id: 'skymap2',
     constellationlabels: false,
@@ -157,10 +158,10 @@ S(document).ready(function () {
     // if key is number 0-9, send get request to server /on_segment/<segment_number>
     if (event.key >= '0' && event.key <= '9') {
       // send get request to server
-      let segment_number = parseInt(event.key)
+      let segment_number = parseInt(event.key) + 10
 
-      //onSegmentData({data: data[segment_number]})
-      
+      onSegmentData({data: data[segment_number]})
+      return
       $.get("/on_segment/" + segment_number, function (data, status) {
         console.log("data", data)
         onSegmentData({data: data})
@@ -185,19 +186,6 @@ S(document).ready(function () {
         a[j] = tmp;
     }
     return a.join("");
-  }
-
-  const setRandomPosition = function () {
-    // test
-    let lat = default_latlng[0] + ((2 * Math.random() - 1) * 1);
-    let lon = default_latlng[1] + ((2 * Math.random() - 1) * 1);
-    updateMapPosition(lat, lon);
-    let now = new Date().getTime()
-    let nowDate = new Date(now + (Math.random() * 10000000000));
-    updatePlanetariumPosition(lat, lon, nowDate);
-    timestamp = nowDate.getTime()
-    // Start the smooth transition
-    // updatePosition();
   }
 
   const transitionPlanetarium = (data,  duration = 500) => {
@@ -226,12 +214,15 @@ S(document).ready(function () {
       if (progress < 1) {
         requestAnimationFrame(updateTransition);
       } else {
-        skyContainer.className = ''
         currentTime = data.timestamp
         currentAz = data.az
         setTimeout(() => {
+          console.log("done!")
           updatePlanetariumTime(new Date(data.timestamp), 0);
-          planetarium1.setClock(1).calendarUpdate()
+          setTimeout(() => {
+            planetarium1.setClock(1).calendarUpdate()
+            skyContainer.className = ''
+          }, 50)
         }, 1)
       }
     }
