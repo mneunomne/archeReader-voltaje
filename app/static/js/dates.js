@@ -37,7 +37,7 @@ const dates  = [
     lat:        '4.61203073951671',
     lon:        '-74.0688130995132',
     timestamp:   new Date("2020/12/21 17:45:00").getTime(),
-    az:         '250', // looking towards the jupiter and saturn?
+    az:         '140', // looking towards the jupiter and saturn?
   },
   { // protestos colombia 2019
     name: "protestos colombia 2019",

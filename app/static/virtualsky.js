@@ -387,7 +387,7 @@ function VirtualSky(input){
 		'stereo': {
 			title: 'Stereographic projection',
 			azel2xy: function(az,el,w,h){
-				var f = 0.42;
+				var f = 0.52;
 				var sinel1 = 0;
 				var cosel1 = 1;
 				var cosaz = Math.cos((az-Math.PI));
@@ -399,7 +399,7 @@ function VirtualSky(input){
 			},
 			xy2azel: function(x, y, w, h) {
 				//console.log("Stereooooooo")
-				var f = 0.42;
+				var f = 0.52;
 				var sinel1 = 0;
 				var cosel1 = 1;
 				var X = (x - w/2) / h;
@@ -3402,7 +3402,7 @@ VirtualSky.prototype.setClock = function(seconds){
 			if(seconds==="now") this.updateClock(new Date());
 			else this.updateClock(new Date(seconds));
 		}else{
-			this.updateClock((typeof this.input.clock==="string") ? this.input.clock.replace(/%20/g,'; ') : this.input.clock);
+			this.updateClock((typeof this.input.clock==="string") ? this.input.clock.replace(/%20/g,' ') : this.input.clock);
 			if(typeof this.clock==="string") this.updateClock(new Date(this.clock));
 		}
 	}else if(typeof seconds==="object"){
@@ -3460,7 +3460,7 @@ VirtualSky.prototype.addPointer = function(input){
 		if(typeof p.html !== "string"){
 			style = p.style || "width:128px;height:128px;";
 			url = p.url || "http://server1.wikisky.org/v2?ra="+(p.ra/15)+"&de="+(p.dec)+"&zoom=6&img_source=DSS2";
-			img = p.img || 'http://server7.sky-map.org/imgcut?survey=DSS2&w=128&h=128&ra='+(p.ra/15)+'&de='+p.dec+'&angle=0.25&output=PNG';;
+			img = p.img || 'http://server7.sky-map.org/imgcut?survey=DSS2&w=128&h=128&ra='+(p.ra/15)+'&de='+p.dec+'&angle=0.25&output=PNG';
 			label = p.credit || "View in Wikisky";
 			credit = p.credit || "DSS2/Wikisky";
 			p.html =  p.html ||
