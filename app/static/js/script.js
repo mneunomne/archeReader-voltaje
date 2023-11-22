@@ -71,7 +71,7 @@ const initPlanetarium = function (w, h) {
     scalestars: 2,
     scaleplanets: 3,
     width: w ,
-    height: sky_height + 5,// + 15,
+    height: sky_height + 1,// + 15,
     //;keyboard: false, 
     mouse: true,
     constellations: true,
@@ -92,6 +92,9 @@ const initPlanetarium = function (w, h) {
     showstarlabels: false,
     height: window.innerHeight - sky_height
   });
+
+  planetarium1.advanceTime(1, 100)
+  planetarium2.advanceTime(1, 100)
 }
 
 const initMap = function () {
@@ -160,7 +163,7 @@ S(document).ready(function () {
       // send get request to server
       let segment_number = parseInt(event.key)
 
-      //return onSegmentData({data: data[segment_number]})
+      return onSegmentData({data: data[segment_number]})
 
       $.get("/on_segment/" + segment_number, function (data, status) {
         console.log("data", data)
