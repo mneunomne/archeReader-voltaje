@@ -2814,8 +2814,9 @@ VirtualSky.prototype.drawConstellationLines = function(colour){
 	x.beginPath();
 	x.strokeStyle = colour;
 	x.fillStyle = colour;
-	x.lineWidth = (this.constellation.lineWidth || 0.75);
-	var fontsize = this.fontsize();
+	x.lineWidth = (this.constellation.lineWidth || 0.5);
+	var fontsize = this.fontsize()
+	;
 	this.setFont();
 	if(typeof this.lines!=="object") return this;
 	var pos,posa,posb,a,b,l,idx1,idx2,s;
