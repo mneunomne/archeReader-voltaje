@@ -69,13 +69,13 @@ const initPlanetarium = function (w, h) {
     meteorshowers: true,
     showstarlabels: false,
     scalestars: 2,
-    scaleplanets: 2,
+    scaleplanets: 3,
     width: w ,
     height: sky_height + 5,// + 15,
     //;keyboard: false, 
     mouse: true,
     constellations: true,
-    constellationlabels: true,
+    constellationlabels: false,
     lang: 'es',
     fontsize: '14px',
     clock: startDate,
@@ -158,17 +158,37 @@ S(document).ready(function () {
     // if key is number 0-9, send get request to server /on_segment/<segment_number>
     if (event.key >= '0' && event.key <= '9') {
       // send get request to server
-      let segment_number = parseInt(event.key) + 10
+      let segment_number = parseInt(event.key)
 
-      onSegmentData({data: data[segment_number]})
-      return
+      //return onSegmentData({data: data[segment_number]})
+
       $.get("/on_segment/" + segment_number, function (data, status) {
         console.log("data", data)
         onSegmentData({data: data})
       });
-    
-      
-    } 
+    }
+    n = undefined;
+    // 10-19
+    switch (event.key) {
+      case 'q': n = 10; break;
+      case 'w': n = 11; break;
+      case 'e': n = 12; break;
+      case 'r': n = 13; break;
+      case 't': n = 14; break;
+      case 'y': n = 15; break;
+      case 'u': n = 16; break;
+      case 'i': n = 17; break;
+      case 'o': n = 18; break;
+      case 'p': n = 19; break;
+      default:
+        break;
+    }
+    if (n !== undefined) {
+      $.get("/on_segment/" + n, function (data, status) {
+        console.log("data", data)
+        onSegmentData({data: data})
+      });
+    }
   });
 
   window.addEventListener('resize', function (event) {

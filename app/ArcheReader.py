@@ -248,12 +248,12 @@ class ArcheReader:
     # rotate 90 degrees
     _w = SEGMENT_OUTPUT_WIDTH
     _h = SEGMENT_OUTPUT_HEIGHT
-    padding = 20
-    padding_x = padding + 22
-    padding_y = padding + 10
+    padding = 35
+    padding_x = padding + 10
+    padding_y = padding + 2
     # Calculate the dimensions of each segment
     segment_width = (_w - padding_x * 2) // INNER_COLS
-    segment_height = ((_h - padding_y * 2)  // INNER_ROWS)
+    segment_height = ((_h - padding_y * 2)  // INNER_ROWS) - 2
     
     #gray_image = cv2.cvtColor(roi_cropped, cv2.COLOR_BGR2GRAY)
 
@@ -305,6 +305,7 @@ class ArcheReader:
         # Perform template matching
         matched_template, matched_filename, percentage = template_matching(gray_segment, self.templates)
         matched_filename = matched_filename.split(".")[0]
+        matched_filename = matched_filename.split("_")[0]
         roi_cropped = cv2.putText(roi_cropped, matched_filename, (x_start, y_start+20),  cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0) )
         roi_cropped = cv2.putText(roi_cropped, percentage, (x_start, y_start+40),  cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0) )
         
@@ -404,7 +405,7 @@ class ArcheReader:
         
         # size of output image segment
         output_width = 700
-        output_height = 800
+        output_height = 700
 
         # Define the coordinates of the output rectangle
         output_rect = np.array([[0, 0], [output_width - 1, 0], [output_width - 1, output_height - 1], [0, output_height - 1]], dtype=np.float32)
@@ -420,12 +421,12 @@ class ArcheReader:
         # rotate 90 degrees
         _w = output_width
         _h = output_height
-        padding = 0
+        padding = 10
         padding_x = padding
-        padding_y = padding
+        padding_y = padding + 200
         # Calculate the dimensions of each segment
         segment_width = (_w - padding_x * 2) // INNER_COLS
-        segment_height = (_h - padding_y * 2)  // INNER_ROWS
+        segment_height = (_h - padding_y * 2)  // INNER_ROWS - 10
         
         # Convert the cropped image to grayscale
         # gray_cropped = cv2.cvtColor(roi_cropped, cv2.COLOR_BGR2GRAY)
