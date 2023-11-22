@@ -75,7 +75,7 @@ const initPlanetarium = function (w, h) {
     //;keyboard: false, 
     mouse: true,
     constellations: true,
-    constellationlabels: false,
+    constellationlabels: true,
     lang: 'es',
     fontsize: '14px',
     clock: startDate,
