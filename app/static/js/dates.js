@@ -92,7 +92,7 @@ const dates  = [
     index: 12,
     lat: '4.597223490451007', 
     lon: '-74.06977816014044',
-    timestamp: new Date("1538/8/6 18:00:00").getTime(),
+    timestamp: new Date("1538/8/6 14:00:00").getTime(),
     az: '270',
   },
   {
@@ -144,14 +144,6 @@ const dates  = [
     az: '120',
   },
   {
-    name: 'ley de 1890',
-    index: 19,
-    lat: '4.597223490451007', 
-    lon: '-74.06977816014044',
-    timestamp: new Date("1890/11/25 18:25:00").getTime(),
-    az: '250',
-  },
-  {
     name: 'next occultation',
     index: 19,
     lat: '4.597223490451007', 
@@ -159,4 +151,24 @@ const dates  = [
     timestamp: new Date("7548/7/11 1:52:00").getTime(),
     az: '180',
   },
+  {
+    name: 'ley de 1890',
+    index: 19,
+    lat: '4.597223490451007', 
+    lon: '-74.06977816014044',
+    timestamp: new Date("1890/11/25 18:25:00").getTime(),
+    az: '250',
+  },
 ].sort((a, b) => a.timestamp - b.timestamp);
+
+
+/*
+{ // Bogotá Earthquake 1917
+    name: "Bogotá Earthquake 1917",
+    index: 7,
+    lat:        '4.50019134186379',
+    lon:        '-73.9350820670254',
+    timestamp:   new Date("1917/8/31 6:36:00").getTime(),
+    az:         '307', // looking outwards from the church of chapinero
+  },
+  */
