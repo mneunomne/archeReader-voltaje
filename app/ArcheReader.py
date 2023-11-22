@@ -336,12 +336,15 @@ class ArcheReader:
   def display_detections(self, new_detections, video_output):
     # Update the OpenCV display with new detections
     # This method should be called from the main thread
-    # print("New Detections:", new_detections)
+    print("New Detections:", new_detections)
     markers = new_detections[0]
-    ids = new_detections[1]
+    #ids = new_detections[1]
+    
+    # no need to draw ids
+    #ids = []
     
     # diaplay markers here:
-    image = aruco.drawDetectedMarkers(video_output, markers, ids)
+    image = aruco.drawDetectedMarkers(video_output, markers, np.array([]))
     return image
     
   def set_detections(self, detections, image, is_valid):
