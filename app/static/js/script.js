@@ -160,15 +160,35 @@ S(document).ready(function () {
       // send get request to server
       let segment_number = parseInt(event.key)
 
-      // return onSegmentData({data: data[segment_number]})
+      //return onSegmentData({data: data[segment_number]})
 
       $.get("/on_segment/" + segment_number, function (data, status) {
         console.log("data", data)
         onSegmentData({data: data})
       });
-    
-      
-    } 
+    }
+    n = undefined;
+    // 10-19
+    switch (event.key) {
+      case 'q': n = 10; break;
+      case 'w': n = 11; break;
+      case 'e': n = 12; break;
+      case 'r': n = 13; break;
+      case 't': n = 14; break;
+      case 'y': n = 15; break;
+      case 'u': n = 16; break;
+      case 'i': n = 17; break;
+      case 'o': n = 18; break;
+      case 'p': n = 19; break;
+      default:
+        break;
+    }
+    if (n !== undefined) {
+      $.get("/on_segment/" + n, function (data, status) {
+        console.log("data", data)
+        onSegmentData({data: data})
+      });
+    }
   });
 
   window.addEventListener('resize', function (event) {
