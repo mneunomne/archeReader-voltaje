@@ -253,7 +253,7 @@ class ArcheReader:
     padding_y = padding + 2
     # Calculate the dimensions of each segment
     segment_width = (_w - padding_x * 2) // INNER_COLS
-    segment_height = ((_h - padding_y * 2)  // INNER_ROWS) - 2
+    segment_height = ((_h - padding_y * 2)  // INNER_ROWS)
     
     #gray_image = cv2.cvtColor(roi_cropped, cv2.COLOR_BGR2GRAY)
 
@@ -336,7 +336,7 @@ class ArcheReader:
   def display_detections(self, new_detections, video_output):
     # Update the OpenCV display with new detections
     # This method should be called from the main thread
-    print("New Detections:", new_detections)
+    # print("New Detections:", new_detections)
     markers = new_detections[0]
     #ids = new_detections[1]
     

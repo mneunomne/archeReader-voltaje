@@ -77,7 +77,7 @@ const initPlanetarium = function (w, h) {
     constellations: true,
     constellationlabels: true,
     lang: 'es',
-    fontsize: '14px',
+    fontsize: '18px',
     clock: startDate,
     credit: false,
   }
@@ -93,8 +93,8 @@ const initPlanetarium = function (w, h) {
     height: window.innerHeight - sky_height
   });
 
-  planetarium1.advanceTime(1, 100)
-  planetarium2.advanceTime(1, 100)
+  //planetarium1.advanceTime(1, 100)
+  //planetarium2.advanceTime(1, 100)
 }
 
 const initMap = function () {
@@ -163,7 +163,7 @@ S(document).ready(function () {
       // send get request to server
       let segment_number = parseInt(event.key)
 
-      return onSegmentData({data: data[segment_number]})
+      //return onSegmentData({data: data[segment_number]})
 
       $.get("/on_segment/" + segment_number, function (data, status) {
         console.log("data", data)
@@ -267,14 +267,10 @@ S(document).ready(function () {
   // decode function
   var decode = function (string) {
     var data = string.split("|").map((item) => {
+      item = item.replace(/^(X+)/g, '')
+      item = item.replace('X', '.')
       console.log("item", item)
-      let result = ''
-      if (item[0] == '-') {
-        result = '-' + item.substring(1, item.length).replace('-', '.')
-      } else {
-        result = item.replace('-', '.')
-      }
-      return parseFloat(result)
+      return parseFloat(item)
     })
     return {
       lat: validateLocation(data[0]),
@@ -335,7 +331,7 @@ S(document).ready(function () {
 
   const onSegmentData = function (msg) {
     console.log('detection_data', msg);
-    var string = msg.data.replace(/X/g, '')
+    var string = msg.data//.replace(/X/g, '')
     console.log('string', string);
     var data = decode(string)
     console.log("decode data", data)

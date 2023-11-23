@@ -1,0 +1,103 @@
+@font-face {
+    font-family: 'ABC Laica Mono';
+    src: url("../font/ABC Laica Mono/ABCLaicaMono-Regular-Trial.otf");
+}
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #000;
+    color: #fff;
+    font-family: sans-serif;
+    font-size: 12px;
+    overflow: hidden;
+    font-family: 'ABC Laica Mono';
+}
+#container {
+    position: absolute;
+    bottom: 50px;
+    right: 50px;
+    width: 700px;
+    height: 800px;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    z-index: 9;
+}
+#skymap, #skymap2 {
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 50vh;
+    filter: sepia(0.5);
+    z-index: 4;
+}
+#skymap2 {
+    z-index: 2 !important;
+    bottom: 0;
+    top: inherit !important;
+    transform: scale(-1, -1);
+}
+#skymap canvas {
+    opacity: 0.9;
+    filter: blur(0px);
+    transition: filter 0.5s;
+    box-shadow: 0 9px 72px rgb(18 30 36);
+}
+#skymap.transition canvas {
+    filter: blur(5px);
+}
+#video {
+    opacity: 0.9;
+    position: fixed;
+    z-index: 3;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 0;
+    width: 1280px;
+    height: 960px;
+    filter: contrast(1.2);
+}
+#video2 {
+    opacity: 0;
+    position: fixed;
+    top: 0;
+    width: 1280px;
+    height: 960px;
+    filter: contrast(1.5);
+    z-index: 3;
+    left: 50%;
+    transform: translateX(-50%) scale(1, -1);
+}
+#map {
+    height: 50vh;
+    z-index: 1;
+}
+#image {
+    width: 100%;
+    height: 100%;
+    z-index: 4;
+    opacity: 0.5;
+}
+#characters {
+    display: none;
+    position: absolute;
+    top: 0px;
+    z-index: 9;
+    /* height: 99px; */
+    text-align: right;
+    width: 100vw;
+}
+
+.skymap_btn_help {
+    display: none !important;
+}
+
+#characters img {
+    opacity: 0;
+    height: 35px;
+    transition: opacity 0.5s;
+}
+
+#characters.show img {
+    opacity: 1;
+}
