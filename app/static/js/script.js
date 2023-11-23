@@ -143,6 +143,9 @@ S(document).ready(function () {
 
   socket.onmessage = (event) => {
     console.log("onmessage", event.data);
+    if (event.data.includes("fail")) {
+      return
+    } 
     if (event.data.includes("detection-")) {
       var msg = event.data.split("detection-")[1]
       onSegmentData({data: msg})
@@ -351,7 +354,7 @@ S(document).ready(function () {
       if (char == '.') char = '-'
       const img = document.createElement('img')
       img.src='templates/' + char + '.svg'
-      img.style = `transition-delay: ${index * 0.025}s;`
+      img.style = `transition-delay: ${index * 0.01}s;`
       messageContainer.appendChild(img)
       if (char == '|') {
         const br = document.createElement('br')

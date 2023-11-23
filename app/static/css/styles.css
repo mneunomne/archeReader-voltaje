@@ -11,6 +11,7 @@ body {
     font-size: 12px;
     overflow: hidden;
     font-family: 'ABC Laica Mono';
+    cursor: none;
 }
 #container {
     position: absolute;
@@ -79,9 +80,9 @@ body {
     opacity: 0.5;
 }
 #characters {
-    display: none;
     position: absolute;
-    top: 0px;
+    top: 5px;
+    right: 5px;
     z-index: 9;
     /* height: 99px; */
     text-align: right;
@@ -94,8 +95,9 @@ body {
 
 #characters img {
     opacity: 0;
-    height: 35px;
-    transition: opacity 0.5s;
+    height: 25px;
+    transition: opacity 0.35s;
+    filter: sepia(1);
 }
 
 #characters.show img {
